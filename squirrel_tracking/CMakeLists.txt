@@ -17,6 +17,8 @@ catkin_package(
  cv_bridge gazebo_msgs image_transport pcl_conversions rospy sensor_msgs squirrel_object_perception_msgs tf tf2 mongodb_store
 )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp") # Fails to compile because of GOMP
+
 include_directories(include ${catkin_INCLUDE_DIRS} ${V4R_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 
 add_executable(object_tracker src/object_tracker.cpp)

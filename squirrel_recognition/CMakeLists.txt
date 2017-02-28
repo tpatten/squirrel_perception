@@ -24,6 +24,8 @@ catkin_package(
    CATKIN_DEPENDS roscpp rospy squirrel_object_perception_msgs
 )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp") # Fails to compile because of GOMP
+
 ###########
 ## Build ##
 ###########
