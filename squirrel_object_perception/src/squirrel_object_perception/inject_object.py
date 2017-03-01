@@ -24,6 +24,7 @@ def add_object_to_db(id, category, pose, size):
         obj.bounding_cylinder = BCylinder()
         obj.bounding_cylinder.diameter = size
         obj.bounding_cylinder.height = size
+        obj.header.frame_id = "map"
         # note: we leave the cloud empty: obj.cloud
         request = AddObjectServiceRequest()
         request.object = obj
@@ -34,22 +35,22 @@ def add_object_to_db(id, category, pose, size):
     return resp
 
 def usage():
-    print "Injects an object with ID and category/class into the scene database."
-    print "-i id -c category"
+    print "Injects an object with ID, category/class, size and 2D position (map frame) into the scene database."
+    print "-i id -c category -s size -x xpos -y ypos"
 
 if __name__ == '__main__':
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hi:c:s:", ["help", "id=", "category=", "size="])
+        opts, args = getopt.getopt(sys.argv[1:], "hi:c:s:x:y:", ["help", "id=", "category=", "size=", "xpos=", "ypos="])
 
         id = ""
         category = ""
         pose = Pose()
-        pose.position.x = 0
-        pose.position.y = 0
-        pose.position.y = 0
-        pose.orientation.x = pose.orientation.y = pose.orientation.z = 0
-        pose.orientation.w = 1
+        pose.position.x = 0.0
+        pose.position.y = 0.0
+        pose.position.z = 0.0
+        pose.orientation.x = pose.orientation.y = pose.orientation.z = 0.0
+        pose.orientation.w = 1.0
         size = 0.0
 
         for o, a in opts:
@@ -59,12 +60,21 @@ if __name__ == '__main__':
                 category = a
             elif o == "-s":
                 size = float(a)
+            elif o == "-x":
+                print "-x"
+                print a
+                pose.position.x = float(a)
+            elif o == "-y":
+                print "-y"
+                print a
+                pose.position.y = float(a)
             elif o in ("-h", "--help"):
                 usage()
                 sys.exit()
             else:
                 assert False, "unhandled option"
-        print "injecting object '" + str(id) + "' of category '" + category + "' with size " + str(size)
+        print "injecting object '" + str(id) + "' of category '" + category + "' with size " + str(size) \
+         + " at position [" + str(pose.position.x) + " " + str(pose.position.y) + "]"
         add_object_to_db(id, category, pose, size)
 
     except getopt.GetoptError as err:
