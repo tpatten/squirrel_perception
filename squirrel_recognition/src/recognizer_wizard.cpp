@@ -73,7 +73,7 @@ public:
                 std::cout << ">> ";
                 std::cin >> class_number;
 
-                if (class_number >= 0 && class_number < models_.size())
+                if (class_number >= -1 && class_number < models_.size())
                 {
                     std_msgs::String input_id;
                     input_id.data = models_[class_number];
@@ -200,6 +200,7 @@ public:
             ROS_ERROR("You must set the models_dir parameter to a model directory!");
             return false;
         }
+        // Not actually using this for testing
         if (!loadModels())
         {
             ROS_ERROR("Failed to load model names in directory %s", models_dir_.c_str());

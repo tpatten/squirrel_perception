@@ -70,3 +70,4 @@
 /home/tpat8946/Data/TUW/Datasets/TUW_GH30_dataset/GH30_set_003 16
 /home/tpat8946/Data/TUW/Datasets/TUW_GH30_experiment_dataset/GH30_experiment_set_002 12
 /home/tpat8946/Data/TUW/Datasets/TUW_GH30_online_dataset/GH30_online_set_001/min_class_entropy_unoccluded 12
+/home/catkin_ws/squirrel/src/squirrel_perception/squirrel_active_exploration/data/T_01_willow_dataset 16

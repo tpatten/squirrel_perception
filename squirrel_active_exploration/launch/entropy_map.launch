@@ -3,10 +3,10 @@
 
   <arg name="hostname" default="localhost" />
 
-  <arg name="training_directory" default="$(find squirrel_active_exploration)/data/training/" />
+  <arg name="training_directory" default="$(find squirrel_active_exploration)/data/training_set/training/" />
   <arg name="descriptor" default="esf" />
   <arg name="classification" default="true" />
-  <arg name="inspect" default="false" />
+  <arg name="inspect" default="true" />
 
   <node name="squirrel_entropy_map"
         pkg="squirrel_active_exploration"
