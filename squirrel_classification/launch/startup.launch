@@ -1,7 +1,7 @@
 <launch>
 
-  <arg name="training_dir" default="$(find squirrel_active_exploration)/data/training_set/models" />  <!-- required -->
-  <arg name="models_dir" default="$(find squirrel_active_exploration)/data/training_set/training" />   <!-- required -->
+  <arg name="models_dir" default="$(find squirrel_active_exploration)/data/training_set_good/models" />  <!-- required -->
+  <arg name="training_dir" default="$(find squirrel_active_exploration)/data/training_set_good/training" />   <!-- required -->
   <arg name="nn" default="10" />
   <arg name="chop_z" default="2.5" />
 

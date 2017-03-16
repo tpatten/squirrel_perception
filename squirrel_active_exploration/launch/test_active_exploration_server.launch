@@ -19,13 +19,13 @@
   <arg name="occlusions" default="true" />
   <arg name="working_classifier" default="true" />  <!-- is "true" if classifier is working?? -->
 
-  <node name="test_active_exploration_server_robot"
+  <node name="test_active_exploration_server"
         pkg="squirrel_active_exploration"
-        type="test_active_exploration_server_robot"
+        type="test_active_exploration_server"
         output="screen">
-       	<param name="data_dir" type="string" value="$(arg data_dir)" />
+		<param name="data_dir" type="string" value="$(arg data_dir)" />
 		<param name="train_dir" type="string" value="$(arg train_dir)" />
-    	<param name="variance" type="double" value="$(arg variance)" />
+    <param name="variance" type="double" value="$(arg variance)" />
 		<param name="camera_height" type="double" value="$(arg camera_height)" />
 		<param name="robot_radius" type="double" value="$(arg robot_radius)" />
 		<param name="distance_from_center" type="double" value="$(arg distance_from_center)" />

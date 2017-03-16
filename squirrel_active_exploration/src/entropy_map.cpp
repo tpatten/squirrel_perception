@@ -81,7 +81,7 @@ bool InstanceEntropyMap::load_data()
         string f = string(dirp->d_name);
         if (strcmp(f.c_str(),".") != 0 && strcmp(f.c_str(),"..") != 0)
         {
-            //cout << "f: " << f << endl;
+            cout << "f: " << f << endl;
             // Get the number
             size_t underscore = f.find_last_of('_');
             size_t dot = f.find_last_of('.');
@@ -91,6 +91,7 @@ bool InstanceEntropyMap::load_data()
                 string str_ix = f.substr(underscore+1,str_len-1);
                 int ix = atoi(str_ix.c_str());
                 string filename = ob_train_dir + f;
+                cout << "filename " << filename << endl;
 
                 if (strncmp(f.c_str(),_VIEW_PREFIX, sizeof(_VIEW_PREFIX)-1) == 0)
                 {
@@ -99,7 +100,7 @@ bool InstanceEntropyMap::load_data()
                         ROS_WARN("InstanceEntropyMap::load_data : could not read point cloud file %s", filename.c_str());
                     else
                         cloud_map[ix] = in_cloud;
-                    //cout << ix << " read " << in_cloud->size() << " points" << endl;
+                    cout << ix << " read " << in_cloud->size() << " points" << endl;
                 }
                 if (strncmp(f.c_str(),_TRANSFORM_PREFIX, sizeof(_TRANSFORM_PREFIX)-1) == 0)
                 {
@@ -124,7 +125,7 @@ bool InstanceEntropyMap::load_data()
                         Eigen::Matrix4f tri = tr.inverse();
                         Eigen::Matrix4f *tr_ptr (new Eigen::Matrix4f(tri));
                         transform_map[ix] = tr_ptr;
-                        //cout << "*tr_ptr: " << *tr_ptr << endl;
+                        cout << "*tr_ptr: " << *tr_ptr << endl;
                     }
                     myfile.close();
                 }
@@ -157,6 +158,7 @@ bool InstanceEntropyMap::load_data()
                             int cr_ix = atoi(cr_str_ix.c_str());
                             centroid_map[cr_ix] = cr_ptr;
                         }
+                        cout << "centroid " << *cr_ptr << endl;
                     }
                     myfile.close();
                 }
@@ -172,6 +174,7 @@ bool InstanceEntropyMap::load_data()
                         double ve = atof(word.c_str());
                         double *ve_ptr (new double(ve));
                         surface_area_map[ix] = ve_ptr;
+                        cout << "surface area " << *ve_ptr << endl;
                     }
                     myfile.close();
                 }
@@ -187,6 +190,7 @@ bool InstanceEntropyMap::load_data()
                         double ce = atof(word.c_str());
                         double *ce_ptr (new double(ce));
                         class_entropy_map[ix] = ce_ptr;
+                        cout << "class entropy " << *ce_ptr << endl;
                     }
                     myfile.close();
                 }
@@ -202,6 +206,7 @@ bool InstanceEntropyMap::load_data()
                         double pr = atof(word.c_str());
                         double *pr_ptr (new double(pr));
                         self_probability_map[ix] = pr_ptr;
+                        cout << "self probability " << *pr_ptr << endl;
                     }
                     myfile.close();
                 }
@@ -221,6 +226,7 @@ bool InstanceEntropyMap::load_data()
                     _octree_file = ob_train_dir + _BINARY_OCTREE_FILENAME;
                     loaded_octree = true;
                 }
+                cout << "octree filename " << _octree_file << endl;
             }
         }
     }
@@ -329,7 +335,8 @@ bool InstanceEntropyMap::load_data()
 bool InstanceEntropyMap::is_valid_classification_data()
 {
     // Query if the class entropy has been computed
-    if ((_class_entropies.size() != _point_clouds.size()) || (_self_probabilities.size() != _point_clouds.size()))
+    if ((_class_entropies.size() != _point_clouds.size()) || (_self_probabilities.size() != _point_clouds.size()) ||
+        (_class_entropies.size() == 0) || (_point_clouds.size() == 0) || (_self_probabilities.size() == 0))
         return false;
     // Check each element if it is valid or null
     bool valid = true;
@@ -364,6 +371,8 @@ bool InstanceEntropyMap::compute_classification_data(ros::ServiceClient &class_c
 //        std::vector<double*> _visible_entropies;
 //        std::vector<double*> _class_entropies;
         // Make sure _class_entropies is the same size as the views
+        cout << "_class_entropies.size() = " << _class_entropies.size() << endl;
+        cout << "_point_clouds.size()" << _point_clouds.size() << endl;
         if (_class_entropies.size() != _point_clouds.size())
         {
             ROS_WARN("InstanceEntropyMap::compute_classification_data : _class_entropies has %lu elements and _point_clouds has %lu elements",
@@ -1036,7 +1045,7 @@ bool EntropyMap::load_data()
         string f = string(dirp->d_name);
         if (strcmp(f.c_str(),".") != 0 && strcmp(f.c_str(),"..") != 0)
         {
-            //cout << "class " << f << endl;
+            cout << "class " << f << endl;
             // Create a new class entropy map
             ClassEntropyMap *cem = new ClassEntropyMap();
             if (cem->initialize(_training_directory, f, _descriptor_name))
@@ -1053,8 +1062,10 @@ bool EntropyMap::load_data()
     }
 
     // Compute the class entropies
+    cout << "_do_classification is " << _do_classification << endl;
     if (_do_classification)
     {
+        cout << "computing classification data" << endl;
         if (!compute_classification_data())
         {
             ROS_ERROR("EntropyMap::load_data : could not compute the class entropy");
