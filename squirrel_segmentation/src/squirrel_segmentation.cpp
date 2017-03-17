@@ -15,13 +15,13 @@ SegmenterComplete::segment (squirrel_object_perception_msgs::Segment::Request & 
   pcl::fromROSMsg (req.cloud, *scene);
   ROS_INFO ("Number of points in the scene: %ld", scene->points.size());
     
-  segmenter_->setPointCloud(scene);
+  segmenter_->setInputCloud(scene);
   
   ROS_INFO ("Going to segment the scene.");
   
   segmenter_->segment();
   
-  std::vector<std::vector<int> > clusters = segmenter_->getSegmentedObjectsIndices();
+  std::vector<std::vector<int> > clusters;// = segmenter_->getSegmentIndices();
     
   ROS_INFO ("Number of segmented objects: %ld",clusters.size());
   
@@ -68,10 +68,11 @@ SegmenterComplete::initialize (int argc, char ** argv)
     ROS_ERROR ("Set -scaling_filename option in the command line, ABORTING");
     return;
   }
-    
-  segmenter_.reset(new segmentation::Segmenter);
-  segmenter_->setModelFilename(model_filename_);
-  segmenter_->setScaling(scaling_filename_);
+  
+	v4r::DominantPlaneSegmenterParameter params;  
+  segmenter_ = new v4r::DominantPlaneSegmenter<PointT>(params);
+  //segmenter_->setModelFilename(model_filename_);
+  //segmenter_->setScaling(scaling_filename_);
     
   Segment_ = n_->advertiseService ("/squirrel_segmentation", &SegmenterComplete::segment, this);
   ROS_INFO ("Ready to get service calls...");

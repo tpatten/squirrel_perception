@@ -107,7 +107,7 @@ int main(int argc, char **argv)
     vector<vector<int> > segs;
     if (poses.size() == 0)
     {
-        ROS_ERROR("test_active_exploration_server : iposes is empty");
+        ROS_ERROR("test_active_exploration_server : poses is empty");
         return EXIT_FAILURE;
     }
     else if (poses.size() == 1)
@@ -202,7 +202,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        // Fake lassification if it is not working
+        // Fake classification if it is not working
         ROS_WARN("test_active_exploration_server_robot : fake classification!");
         for (size_t i = 0; i < segs.size(); ++i)
         {
@@ -423,17 +423,17 @@ bool load_data(const string &data_name, const bool &reverse_transforms, vector<E
     // Otherwise it is a directory and must load all files in the directory
     else
     {
-        if (!load_test_directory_with_segment_indices(data_name, reverse_transforms, poses, clouds, transforms, indices))
-        {
-            ROS_ERROR("test_active_exploration_server::load_data : could not load the data from the directory %s", data_name.c_str());
-            return false;
-        }
-        // This can also work without getting the segment indices if segmentation was working
-//        if (!load_test_directory(data_name, reverse_transforms, poses, clouds, transforms))
+//        if (!load_test_directory_with_segment_indices(data_name, reverse_transforms, poses, clouds, transforms, indices))
 //        {
 //            ROS_ERROR("test_active_exploration_server::load_data : could not load the data from the directory %s", data_name.c_str());
 //            return false;
 //        }
+        // This can also work without getting the segment indices
+        if (!load_test_directory(data_name, reverse_transforms, poses, clouds, transforms))
+        {
+            ROS_ERROR("test_active_exploration_server::load_data : could not load the data from the directory %s", data_name.c_str());
+            return false;
+        }
     }
 
     // Return success
