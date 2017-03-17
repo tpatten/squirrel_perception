@@ -5,8 +5,8 @@
 
   <arg name="model_filename" default="$(find squirrel_segmentation)/data/ST-TrainAll.txt.model" />
   <arg name="scaling_filename" default="$(find squirrel_segmentation)/data/ST-TrainAll.txt.scalingparams" />
-  <arg name="models_dir" default="$(find squirrel_active_exploration)/data/training_set/models" />
-  <arg name="training_dir" default="$(find squirrel_active_exploration)/data/training_set/training" />
+  <arg name="models_dir" default="$(find squirrel_active_exploration)/data/training_set/Cat10_ModelDatabase" />
+  <arg name="training_dir" default="$(find squirrel_active_exploration)/data/training_set/Cat10_ModelDatabase" />
   <arg name="camera_image" default="/squirrel_segmentation_visualization_segmentation" />
 
   <!--node name="squirrel_segmentation"

@@ -50,7 +50,7 @@ class Classifier
       classifier_srv_definitions::classify srv;
       srv.request.cloud = req.cloud;
       srv.request.clusters_indices = req.clusters_indices;
-      ros::ServiceClient client = n_.serviceClient<classifier_srv_definitions::classify>("/classify");
+      ros::ServiceClient client = n_.serviceClient<classifier_srv_definitions::classify>("/v4r_object_classifier/classify");
       if(client.call(srv))
       {
         for(size_t i = 0; i < srv.response.class_results.size(); i++)

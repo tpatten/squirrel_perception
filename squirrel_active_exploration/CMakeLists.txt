@@ -109,6 +109,9 @@ target_link_libraries(squirrel_active_exploration_server ${catkin_LIBRARIES} ${O
 add_executable(test_active_exploration_server test/test_active_exploration_server.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
 target_link_libraries(test_active_exploration_server ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
 
+add_executable(test_classifier test/test_classifier.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
+target_link_libraries(test_classifier ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
+
 #add_executable(test_active_exploration_server_robot test/test_active_exploration_server_robot.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
 #target_link_libraries(test_active_exploration_server_robot ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
 
