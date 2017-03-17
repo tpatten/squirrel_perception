@@ -1,7 +1,7 @@
 <launch>
 
-  <arg name="models_dir" default="$(find squirrel_active_exploration)/data/training_set/Cat10_ModelDatabase" />  <!-- required -->
-  <arg name="training_dir" default="$(find squirrel_active_exploration)/data/training_set/Cat10_ModelDatabase" />   <!-- required -->
+  <arg name="models_dir" default="$(find squirrel_active_exploration)/data/training_set/Cat10_ModelDatabase_reduced" />  <!-- required -->
+  <arg name="training_dir" default="$(find squirrel_active_exploration)/data/training_set/Cat10_ModelDatabase_reduced" />   <!-- required -->
   <arg name="nn" default="10" />
   <arg name="chop_z" default="2.5" />
 

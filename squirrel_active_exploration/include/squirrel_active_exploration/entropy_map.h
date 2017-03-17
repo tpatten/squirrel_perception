@@ -32,7 +32,8 @@
 #include <squirrel_object_perception_msgs/EntropyMap.h>
 #include <squirrel_object_perception_msgs/EntropyMapViz.h>
 
-#define _VIEW_PREFIX "view_"
+#define _GENERATED_DATA_DIR "views"
+#define _VIEW_PREFIX "cloud_"
 #define _TRANSFORM_PREFIX "pose_"
 #define _CENTROID_PREFIX "centroid_"
 #define _SURFACE_AREA_PREFIX "entropy_"

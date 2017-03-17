@@ -57,10 +57,12 @@ bool InstanceEntropyMap::load_data()
     ROS_INFO("InstanceEntropyMap::load_data : loading entropy map %s ...", _instance_name.c_str());
     DIR *dp;
     struct dirent *dirp;
+    // Training data contained in directory called "views"
+    // Except centroid data that is contained in directory "descriptor_name"
     string ob_train_dir = add_backslash(_training_directory) +
                           add_backslash(_class_name) +
                           add_backslash(_instance_name) +
-                          add_backslash(_descriptor_name);
+                          add_backslash(_GENERATED_DATA_DIR);
     ROS_INFO("InstanceEntropyMap::load_data : loading training files in %s", ob_train_dir.c_str());
     if((dp  = opendir(ob_train_dir.c_str())) == NULL)
     {
@@ -70,7 +72,6 @@ bool InstanceEntropyMap::load_data()
 
     map<int,PointCloud<PointT>::Ptr> cloud_map;
     map<int,Eigen::Matrix4f*> transform_map;
-    map<int,Eigen::Vector4f*> centroid_map;
     map<int,double*> surface_area_map;
     map<int,double*> class_entropy_map;
     map<int,double*> self_probability_map;
@@ -81,7 +82,7 @@ bool InstanceEntropyMap::load_data()
         string f = string(dirp->d_name);
         if (strcmp(f.c_str(),".") != 0 && strcmp(f.c_str(),"..") != 0)
         {
-            cout << "f: " << f << endl;
+            //cout << "f: " << f << endl;
             // Get the number
             size_t underscore = f.find_last_of('_');
             size_t dot = f.find_last_of('.');
@@ -91,7 +92,7 @@ bool InstanceEntropyMap::load_data()
                 string str_ix = f.substr(underscore+1,str_len-1);
                 int ix = atoi(str_ix.c_str());
                 string filename = ob_train_dir + f;
-                cout << "filename " << filename << endl;
+                //cout << "filename " << filename << endl;
 
                 if (strncmp(f.c_str(),_VIEW_PREFIX, sizeof(_VIEW_PREFIX)-1) == 0)
                 {
@@ -100,7 +101,7 @@ bool InstanceEntropyMap::load_data()
                         ROS_WARN("InstanceEntropyMap::load_data : could not read point cloud file %s", filename.c_str());
                     else
                         cloud_map[ix] = in_cloud;
-                    cout << ix << " read " << in_cloud->size() << " points" << endl;
+                    //cout << ix << " read " << in_cloud->size() << " points" << endl;
                 }
                 if (strncmp(f.c_str(),_TRANSFORM_PREFIX, sizeof(_TRANSFORM_PREFIX)-1) == 0)
                 {
@@ -125,10 +126,143 @@ bool InstanceEntropyMap::load_data()
                         Eigen::Matrix4f tri = tr.inverse();
                         Eigen::Matrix4f *tr_ptr (new Eigen::Matrix4f(tri));
                         transform_map[ix] = tr_ptr;
-                        cout << "*tr_ptr: " << *tr_ptr << endl;
+                        //cout << "*tr_ptr: " << *tr_ptr << endl;
                     }
                     myfile.close();
                 }
+//                if (strncmp(f.c_str(),_CENTROID_PREFIX, sizeof(_CENTROID_PREFIX)-1) == 0)
+//                {
+//                    // Open the file
+//                    ifstream myfile (filename.c_str());
+//                    if (myfile.is_open())
+//                    {
+//                        Eigen::Vector4f cr;
+//                        int i = 0;
+//                        string word;
+//                        while (myfile >> word)
+//                        {
+//                            cr[i] = atof(word.c_str());
+//                            ++i;
+//                            if (i == 3)
+//                                break;
+//                        }
+//                        cr[3] = 0;
+//                        Eigen::Vector4f *cr_ptr (new Eigen::Vector4f(cr));
+//                        // Re read the integer because it is different for the centroids
+//                        // Index is between the two underscores
+//                        size_t underscore1 = f.find_first_of('_');
+//                        size_t underscore2 = f.find_last_of('_');
+//                        if (underscore1 != string::npos && underscore2 != string::npos && (underscore2 - underscore1) > 0)
+//                        {
+//                            int cr_str_len = underscore2 - underscore1;
+//                            string cr_str_ix = f.substr(underscore1+1,cr_str_len-1);
+//                            int cr_ix = atoi(cr_str_ix.c_str());
+//                            centroid_map[cr_ix] = cr_ptr;
+//                        }
+//                        cout << "centroid " << *cr_ptr << endl;
+//                    }
+//                    myfile.close();
+//                }
+                if (strncmp(f.c_str(),_SURFACE_AREA_PREFIX, sizeof(_SURFACE_AREA_PREFIX)-1) == 0)
+                {
+                    // Open the file
+                    ifstream myfile (filename.c_str());
+                    if (myfile.is_open())
+                    {
+                        string word;
+                        // Only read one number on the file
+                        myfile >> word;
+                        double ve = atof(word.c_str());
+                        double *ve_ptr (new double(ve));
+                        surface_area_map[ix] = ve_ptr;
+                        //cout << "surface area " << *ve_ptr << endl;
+                    }
+                    myfile.close();
+                }
+                if (strncmp(f.c_str(),_CLASS_ENTROPY_PREFIX, sizeof(_CLASS_ENTROPY_PREFIX)-1) == 0)
+                {
+                    // Open the file
+                    ifstream myfile (filename.c_str());
+                    if (myfile.is_open())
+                    {
+                        string word;
+                        // Only read one number on the file
+                        myfile >> word;
+                        double ce = atof(word.c_str());
+                        double *ce_ptr (new double(ce));
+                        class_entropy_map[ix] = ce_ptr;
+                        //cout << "class entropy " << *ce_ptr << endl;
+                    }
+                    myfile.close();
+                }
+                if (strncmp(f.c_str(),_SELF_PROB_PREFIX, sizeof(_SELF_PROB_PREFIX)-1) == 0)
+                {
+                    // Open the file
+                    ifstream myfile (filename.c_str());
+                    if (myfile.is_open())
+                    {
+                        string word;
+                        // Only read one number on the file
+                        myfile >> word;
+                        double pr = atof(word.c_str());
+                        double *pr_ptr (new double(pr));
+                        self_probability_map[ix] = pr_ptr;
+                        //cout << "self probability " << *pr_ptr << endl;
+                    }
+                    myfile.close();
+                }
+            }
+            // Check if it is the tree file
+            else
+            {
+                if (strcmp(f.c_str(), _OCTREE_FILENAME) == 0)
+                {
+                    // Set the string name and the flag
+                    _octree_file = ob_train_dir + _OCTREE_FILENAME;
+                    loaded_octree = true;
+                }
+                else if (strcmp(f.c_str(), _BINARY_OCTREE_FILENAME) == 0)
+                {
+                    // Set the string name and the flag
+                    _octree_file = ob_train_dir + _BINARY_OCTREE_FILENAME;
+                    loaded_octree = true;
+                }
+                //cout << "octree filename " << _octree_file << endl;
+            }
+        }
+    }
+    closedir(dp);
+
+    // Get the centroids
+    map<int,Eigen::Vector4f*> centroid_map;
+    string ct_train_dir = add_backslash(_training_directory) +
+                          add_backslash(_class_name) +
+                          add_backslash(_instance_name) +
+                          add_backslash(_descriptor_name);
+    ROS_INFO("InstanceEntropyMap::load_data : loading centroid files in %s", ct_train_dir.c_str());
+    if((dp  = opendir(ct_train_dir.c_str())) == NULL)
+    {
+        ROS_ERROR("InstanceEntropyMap::load_data : could not open %s", ct_train_dir.c_str());
+        return false;
+    }
+
+    while ((dirp = readdir(dp)) != NULL)
+    {
+        string f = string(dirp->d_name);
+        if (strcmp(f.c_str(),".") != 0 && strcmp(f.c_str(),"..") != 0)
+        {
+            //cout << "f: " << f << endl;
+            // Get the number
+            size_t underscore = f.find_last_of('_');
+            size_t dot = f.find_last_of('.');
+            if (underscore != string::npos && dot != string::npos && (dot - underscore) > 0)
+            {
+                int str_len = dot - underscore;
+                string str_ix = f.substr(underscore+1,str_len-1);
+                int ix = atoi(str_ix.c_str());
+                string filename = ct_train_dir + f;
+                //cout << "filename " << filename << endl;
+
                 if (strncmp(f.c_str(),_CENTROID_PREFIX, sizeof(_CENTROID_PREFIX)-1) == 0)
                 {
                     // Open the file
@@ -158,75 +292,10 @@ bool InstanceEntropyMap::load_data()
                             int cr_ix = atoi(cr_str_ix.c_str());
                             centroid_map[cr_ix] = cr_ptr;
                         }
-                        cout << "centroid " << *cr_ptr << endl;
+                        //cout << "centroid " << *cr_ptr << endl;
                     }
                     myfile.close();
                 }
-                if (strncmp(f.c_str(),_SURFACE_AREA_PREFIX, sizeof(_SURFACE_AREA_PREFIX)-1) == 0)
-                {
-                    // Open the file
-                    ifstream myfile (filename.c_str());
-                    if (myfile.is_open())
-                    {
-                        string word;
-                        // Only read one number on the file
-                        myfile >> word;
-                        double ve = atof(word.c_str());
-                        double *ve_ptr (new double(ve));
-                        surface_area_map[ix] = ve_ptr;
-                        cout << "surface area " << *ve_ptr << endl;
-                    }
-                    myfile.close();
-                }
-                if (strncmp(f.c_str(),_CLASS_ENTROPY_PREFIX, sizeof(_CLASS_ENTROPY_PREFIX)-1) == 0)
-                {
-                    // Open the file
-                    ifstream myfile (filename.c_str());
-                    if (myfile.is_open())
-                    {
-                        string word;
-                        // Only read one number on the file
-                        myfile >> word;
-                        double ce = atof(word.c_str());
-                        double *ce_ptr (new double(ce));
-                        class_entropy_map[ix] = ce_ptr;
-                        cout << "class entropy " << *ce_ptr << endl;
-                    }
-                    myfile.close();
-                }
-                if (strncmp(f.c_str(),_SELF_PROB_PREFIX, sizeof(_SELF_PROB_PREFIX)-1) == 0)
-                {
-                    // Open the file
-                    ifstream myfile (filename.c_str());
-                    if (myfile.is_open())
-                    {
-                        string word;
-                        // Only read one number on the file
-                        myfile >> word;
-                        double pr = atof(word.c_str());
-                        double *pr_ptr (new double(pr));
-                        self_probability_map[ix] = pr_ptr;
-                        cout << "self probability " << *pr_ptr << endl;
-                    }
-                    myfile.close();
-                }
-            }
-            // Check if it is the tree file
-            else
-            {
-                if (strcmp(f.c_str(), _OCTREE_FILENAME) == 0)
-                {
-                    // Set the string name and the flag
-                    _octree_file = ob_train_dir + _OCTREE_FILENAME;
-                    loaded_octree = true;
-                }
-                else if (strcmp(f.c_str(), _BINARY_OCTREE_FILENAME) == 0)
-                {
-                    // Set the string name and the flag
-                    _octree_file = ob_train_dir + _BINARY_OCTREE_FILENAME;
-                    loaded_octree = true;
-                }
-                cout << "octree filename " << _octree_file << endl;
             }
         }
     }
@@ -371,8 +440,8 @@ bool InstanceEntropyMap::compute_classification_data(ros::ServiceClient &class_c
 //        std::vector<double*> _visible_entropies;
 //        std::vector<double*> _class_entropies;
         // Make sure _class_entropies is the same size as the views
-        cout << "_class_entropies.size() = " << _class_entropies.size() << endl;
-        cout << "_point_clouds.size()" << _point_clouds.size() << endl;
+        //cout << "_class_entropies.size() = " << _class_entropies.size() << endl;
+        //cout << "_point_clouds.size()" << _point_clouds.size() << endl;
         if (_class_entropies.size() != _point_clouds.size())
         {
             ROS_WARN("InstanceEntropyMap::compute_classification_data : _class_entropies has %lu elements and _point_clouds has %lu elements",
@@ -391,7 +460,7 @@ bool InstanceEntropyMap::compute_classification_data(ros::ServiceClient &class_c
         string dir = add_backslash(_training_directory) +
                      add_backslash(_class_name) +
                      add_backslash(_instance_name) +
-                     add_backslash(_descriptor_name);
+                     add_backslash(_GENERATED_DATA_DIR);
         string f;
         // For each view
         for (vector<PointCloud<PointT>::Ptr>::size_type i = 0; i < _point_clouds.size(); ++i)
@@ -854,7 +923,7 @@ bool ClassEntropyMap::load_data()
     while ((dirp = readdir(dp)) != NULL)
     {
         string f = string(dirp->d_name);
-        if (strcmp(f.c_str(),".") != 0 && strcmp(f.c_str(),"..") != 0)
+        if (strcmp(f.c_str(),".") != 0 && strcmp(f.c_str(),"..") != 0 && f.find(".") == string::npos)
         {
             //cout << f << endl;
             // Create a new instance entropy map
@@ -1045,7 +1114,7 @@ bool EntropyMap::load_data()
         string f = string(dirp->d_name);
         if (strcmp(f.c_str(),".") != 0 && strcmp(f.c_str(),"..") != 0)
         {
-            cout << "class " << f << endl;
+            //cout << "class " << f << endl;
             // Create a new class entropy map
             ClassEntropyMap *cem = new ClassEntropyMap();
             if (cem->initialize(_training_directory, f, _descriptor_name))
@@ -1062,10 +1131,10 @@ bool EntropyMap::load_data()
     }
 
     // Compute the class entropies
-    cout << "_do_classification is " << _do_classification << endl;
+    //cout << "_do_classification is " << _do_classification << endl;
     if (_do_classification)
     {
-        cout << "computing classification data" << endl;
+        //cout << "computing classification data" << endl;
         if (!compute_classification_data())
         {
             ROS_ERROR("EntropyMap::load_data : could not compute the class entropy");

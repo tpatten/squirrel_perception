@@ -54,8 +54,8 @@ add_executable(squirrel_segmentation_popout src/squirrel_segmentation_popout.cpp
 #ldl
 #csparse
 #)
-#add_dependencies(squirrel_segmentation )
-#
+#add_dependencies(squirrel_segmentation ${catkin_EXPORTED_TARGETS})
+
 
 target_link_libraries(squirrel_segmentation_popout ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${V4R_LIBS})
 add_dependencies(squirrel_segmentation_popout ${catkin_EXPORTED_TARGETS})
