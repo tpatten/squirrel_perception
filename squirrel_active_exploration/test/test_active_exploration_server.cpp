@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <octomap_ros/conversions.h>
+#include <pcl/kdtree/kdtree_flann.h>
 #include <squirrel_object_perception_msgs/Segment.h>
 #include <squirrel_object_perception_msgs/Classify.h>
 #include <squirrel_object_perception_msgs/ActiveExplorationNBV.h>
@@ -20,7 +21,7 @@ using namespace octomap;
 
 // Function declarations
 bool load_data(const string &data_name, const bool &reverse_transforms, vector<Eigen::Vector4f> &poses,
-               vector<PointCloud<PointT> > &clouds, vector<Eigen::Matrix4f> &transforms, vector<vector<vector<int> > > &indices);
+               vector<PointCloud<PointT> > &clouds, vector<vector<vector<int> > > &indices);
 
 // Run Main
 int main(int argc, char **argv)
@@ -93,9 +94,8 @@ int main(int argc, char **argv)
     // Load the clouds from the file
     vector<Eigen::Vector4f> poses;
     vector<PointCloud<PointT> > clouds;
-    vector<Eigen::Matrix4f> transforms;
     vector<vector<vector<int> > > indices;
-    if (!load_data(data_dir, reverse_transforms, poses, clouds, transforms, indices))
+    if (!load_data(data_dir, reverse_transforms, poses, clouds, indices))
     {
         ROS_ERROR("test_active_exploration_server : could not load the data");
         return EXIT_FAILURE;
@@ -103,25 +103,26 @@ int main(int argc, char **argv)
     // Get a single pose, cloud and transform
     Eigen::Vector4f pose;
     PointCloud<PointT> cloud;
-    Eigen::Matrix4f transform;
     vector<vector<int> > segs;
-    if (poses.size() == 0)
+    if (clouds.size() == 0)
     {
-        ROS_ERROR("test_active_exploration_server : poses is empty");
+        ROS_ERROR("test_active_exploration_server : clouds is empty");
         return EXIT_FAILURE;
     }
-    else if (poses.size() == 1)
+    else if (clouds.size() == 1)
     {
+        ROS_INFO("test_active_exploration_server : loaded one cloud");
         pose = poses[0];
         cloud = clouds[0];
-        transform = transforms[0];
-        segs = indices[0];
+        if (indices.size() > 0)
+            segs = indices[0];
     }
     else
     {
+        ROS_INFO("test_active_exploration_server : loaded multiple clouds");
         multiple_locations = true;
-        int r = int_rand(0, poses.size()-1);
-        if (r < 0 || r >= poses.size())
+        int r = int_rand(0, clouds.size()-1);
+        if (r < 0 || r >= clouds.size())
         {
             ROS_ERROR("test_active_exploration_server : invalid random number %i for poses of size %lu", r, poses.size());
             return EXIT_FAILURE;
@@ -129,17 +130,12 @@ int main(int argc, char **argv)
         // Otherwise get the elements
         pose = poses[r];
         cloud = clouds[r];
-        transform = transforms[r];
-        segs = indices[r];
+        if (r < indices.size())
+            segs = indices[r];
     }
 
-    // Transform the point cloud
-    transformPointCloud(cloud, cloud, transform);
-    // Get the pose from the transformed point cloud
-    pose = extract_camera_position (cloud);
-    pose = transform_eigvec(pose, transform);
-
     // Create the service clients
+    ROS_INFO("test_active_exploration_server : setting up service clients");
     ros::ServiceClient nbv_client = n.serviceClient<squirrel_object_perception_msgs::ActiveExplorationNBV>("/squirrel_active_exploration");
     squirrel_object_perception_msgs::ActiveExplorationNBV nbv_srv;
     ros::ServiceClient seg_client = n.serviceClient<squirrel_object_perception_msgs::Segment>("/squirrel_segmentation");;
@@ -178,13 +174,55 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    // Segmentation (from preloaded data)
+    // Segmentation
     vector<std_msgs::Int32MultiArray> clusters_indices;
-    for (size_t i = 0; i < segs.size(); ++i)
+    if (segs.size() > 0)
     {
-        std_msgs::Int32MultiArray s;
-        s.data = segs[i];
-        clusters_indices.push_back(s);
+        // From preloaded data
+        ROS_INFO("test_active_exploration_server : using preloaded segmentation data");
+        for (size_t i = 0; i < segs.size(); ++i)
+        {
+            std_msgs::Int32MultiArray s;
+            s.data = segs[i];
+            clusters_indices.push_back(s);
+        }
+    }
+    else
+    {
+        // Call the segmentation service
+        ROS_INFO("test_active_exploration_server : segmenting point cloud with %lu points", cloud_msg.data.size());
+        seg_srv.request.cloud = cloud_msg;
+        if (!seg_client.call(seg_srv))
+        {
+            ROS_ERROR("test_active_exploration_server : could not call the segmentation service");
+            return EXIT_FAILURE;
+        }
+        clusters_indices = seg_srv.response.clusters_indices;
+    }
+
+    // If segmentation failed, try a random patch of points
+    if (clusters_indices.size() == 0)
+    {
+        ROS_WARN("test_active_exploration_server : failed to do proper segmentation, proceeding with a random group of points from centre");
+        PointT min, max;
+        getMinMax3D(cloud, min, max);
+        PointT search_point;
+        search_point.x = (max.data[0] - min.data[0])/2;
+        search_point.y = (max.data[1] - min.data[1])/2;
+        search_point.z = (max.data[2] - min.data[2])/2;
+        KdTreeFLANN<PointT> kdtree;
+        PointCloud<PointT>::Ptr cloud_ptr (new PointCloud<PointT>(cloud));
+        kdtree.setInputCloud (cloud_ptr);
+        vector<int> point_idx;
+        vector<float> point_squared_distances;
+        float radius = 30; // cm??
+        if (kdtree.radiusSearch (search_point, radius, point_idx, point_squared_distances) > 0)
+        {
+            ROS_WARN("test_active_exploration_server : segment has %lu points", point_idx.size());
+            std_msgs::Int32MultiArray s;
+            s.data = point_idx;
+            clusters_indices.push_back(s);
+        }
     }
 
     // Classify
@@ -192,7 +230,7 @@ int main(int argc, char **argv)
     if (working_classifier)
     {
         classify_srv.request.cloud = cloud_msg;
-        classify_srv.request.clusters_indices = seg_srv.response.clusters_indices;
+        classify_srv.request.clusters_indices = clusters_indices;
         if (!classify_client.call(classify_srv))
         {
             ROS_ERROR("test_active_exploration_server : could not call the classification service");
@@ -204,7 +242,7 @@ int main(int argc, char **argv)
     {
         // Fake classification if it is not working
         ROS_WARN("test_active_exploration_server_robot : fake classification!");
-        for (size_t i = 0; i < segs.size(); ++i)
+        for (size_t i = 0; i < clusters_indices.size(); ++i)
         {
             squirrel_object_perception_msgs::Classification c;
             std_msgs::String str;
@@ -305,12 +343,11 @@ int main(int argc, char **argv)
 }
 
 bool load_data(const string &data_name, const bool &reverse_transforms, vector<Eigen::Vector4f> &poses,
-               vector<PointCloud<PointT> > &clouds, vector<Eigen::Matrix4f> &transforms, vector<vector<vector<int> > > &indices)
+               vector<PointCloud<PointT> > &clouds, vector<vector<vector<int> > > &indices)
 {
     // Clear the vectors
     poses.clear();
     clouds.clear();
-    transforms.clear();
     indices.clear();
 
     // If this is a single file, then load it
@@ -332,27 +369,51 @@ bool load_data(const string &data_name, const bool &reverse_transforms, vector<E
             ROS_ERROR("test_active_exploration_server::load_data : could not get path and filename from string %s", data_name.c_str());
             return false;
         }
-        // Get the transform
+        // Check if pose and transform are valid
+        Eigen::Quaternionf cloud_transform = cloud.sensor_orientation_;
+        bool do_transform = false;
+        cout << data_name << endl;
+        //cout << cloud_transform << endl;
         Eigen::Vector4f pose;
         PointCloud<PointT> transformed_cloud;
         Eigen::Matrix4f transform;
-        if (!transform_cloud_from_file(cloud_path_name, cloud_filename, cloud, transformed_cloud, pose, transform))
+        if (isIdentity(cloud_transform))
         {
-            ROS_ERROR("test_active_exploration_server::load_data : error transforming point cloud from file %s", data_name.c_str());
-            return false;
+            ROS_WARN("test_active_exploration_server::load_data : cloud has an identity transform, searching for transform file");
+            do_transform = true;
+            // Get the transform
+            if (!transform_cloud_from_file(cloud_path_name, cloud_filename, cloud, transformed_cloud, pose, transform))
+            {
+                ROS_WARN("test_active_exploration_server::load_data : error transforming point cloud from file %s", data_name.c_str());
+                return false;
+            }
         }
-        else
+
+        if (do_transform)
         {
-            // Add to vectors
-            poses.push_back(pose);
-            clouds.push_back(cloud);
             // Reverse transform
             Eigen::Matrix4f transform_inv = transform;
             if (reverse_transforms)
                 transform_inv = transform.inverse();
             transform = transform_inv;
-            transforms.push_back(transform);
+            // Transform the point cloud
+            transformPointCloud(cloud, cloud, transform);
+            // Get the pose from the transformed point cloud
+            pose = extract_camera_position (cloud);
+            pose = transform_eigvec(pose, transform);
+
+            // Add to vectors
+            poses.push_back(pose);
+            clouds.push_back(cloud);
         }
+        else
+        {
+            // Add to vectors
+            pose = cloud.sensor_origin_;
+            poses.push_back(pose);
+            clouds.push_back(cloud);
+        }
+
         // Get the segment indices
         // First get the index number of the point cloud
         // Get the dot
@@ -429,7 +490,7 @@ bool load_data(const string &data_name, const bool &reverse_transforms, vector<E
 //            return false;
 //        }
         // This can also work without getting the segment indices
-        if (!load_test_directory(data_name, reverse_transforms, poses, clouds, transforms))
+        if (!load_test_directory(data_name, reverse_transforms, poses, clouds))
         {
             ROS_ERROR("test_active_exploration_server::load_data : could not load the data from the directory %s", data_name.c_str());
             return false;

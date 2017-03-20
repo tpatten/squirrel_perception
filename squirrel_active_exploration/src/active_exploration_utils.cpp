@@ -1719,9 +1719,10 @@ namespace active_exploration_utils
             // High surface area proportion means high utility
             // Low entropy (low uncertainty) means high utility
             // Find the maximum value and scale everything by this value (it will then be 1 and everything less)
-            // If using entropy hen let [utility = 1 - scaled_entropy] to set high utility to low entropy
+            // If using entropy then let [utility = 1 - scaled_entropy] to set high utility to low entropy
             vector<vector<double> > model_views_max_score;
             model_views_max_score.resize(segs_for_planning.size());
+            ROS_INFO("active_exploration_utils::next_best_view : scaling maximum values");
             for (vector<int>::size_type i = 0; i < segs_for_planning.size(); ++i)
             {
                 int sx = segs_for_planning[i];
@@ -1763,15 +1764,21 @@ namespace active_exploration_utils
             scaled_model_utilities.resize(segs_for_planning.size());
             vector<vector<pair<vector<PointCloud<PointT> >,vector<Eigen::Vector4f> > > > model_views;
             model_views.resize(segs_for_planning.size());
+            ROS_INFO("active_exploration_utils::next_best_view : computing scaled utilities");
             for (vector<int>::size_type i = 0; i < segs_for_planning.size(); ++i)
             {
+                cout << "i: " << i << endl;
                 // Segment index
                 int sx = segs_for_planning[i];
+                cout << "sx: " << sx << endl;
                 // View index from the instance directories
                 int view_ix = atoi(instance_directories[sx][0]._ix.c_str()); // most likely viewpoint
+                cout << "view_ix: " << view_ix << endl;
                 // Resize the vectors
                 scaled_model_utilities[i].resize(emaps[sx].size());
                 model_views[i].resize(emaps[sx].size());
+                cout << "emaps.size() " << emaps.size() << endl;
+                cout << "emaps[sx].size() " << emaps[sx].size() << endl;
                 for (vector<EntMap>::size_type j = 0; j < emaps[sx].size(); ++j)
                 {
                     // Resize the model utility vector
@@ -1827,6 +1834,7 @@ namespace active_exploration_utils
             }
 
             // Compute the utility for each location
+            ROS_INFO("active_exploration_utils::next_best_view : computing utilities for all locations");
             if (all_model_views)
                 next_best_index = gaussian_weighted_next_best_view(utilities, tree, hypothesis, map_locations, segs_for_planning,
                                                                    model_views, scaled_model_utilities, uncertainty_weight, variance,

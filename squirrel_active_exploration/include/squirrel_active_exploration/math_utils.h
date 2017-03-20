@@ -74,5 +74,7 @@ std::vector<int> rank(const std::vector<double> &vec);
 
 std::vector<int> rank(const std::vector<float> &vec);
 
+bool isIdentity(const Eigen::Quaternionf &q);
+
 
 #endif // UTILS_H

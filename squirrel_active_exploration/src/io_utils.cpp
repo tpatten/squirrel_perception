@@ -158,30 +158,53 @@ bool load_test_directory(const string &dir, const bool &invert_transform, vector
                 success = false;
             }
         }
-        // Transform the point cloud
+
         if (success)
         {
-            PointCloud<PointT> transformed_cloud;
+            // Check if the point cloud is already transformed
+            Eigen::Quaternionf cloud_transform = cloud.sensor_orientation_;
+            bool do_transform = false;
             Eigen::Vector4f position;
+            PointCloud<PointT> transformed_cloud;
             Eigen::Matrix4f transform;
-            if (!transform_cloud_from_file(dir, f, cloud, transformed_cloud, position, transform))
+            if (isIdentity(cloud_transform))
             {
-                ROS_WARN("io_utils::load_test_directory : error transforming point cloud from file %s", full_filename.c_str());
-                success = false;
+                ROS_WARN("io_utils::load_test_directory : cloud has an identity transform, searching for transform file");
+                do_transform = true;
+                // Get the transform
+                if (!transform_cloud_from_file(dir, f, cloud, transformed_cloud, position, transform))
+                {
+                    ROS_WARN("io_utils::load_test_directory : error transforming point cloud from file %s", f.c_str());
+                    success = false;
+                }
             }
-            else
+
+            if (do_transform)
             {
-                // Add to the lists
-                poses.push_back(position);
-                //clouds.push_back(transformed_cloud);
-                clouds.push_back(cloud);
+                // Reverse transform
                 Eigen::Matrix4f transform_inv = transform;
                 if (invert_transform)
                     transform_inv = transform.inverse();
                 transform = transform_inv;
-                transforms.push_back(transform);
+                // Transform the point cloud
+                transformPointCloud(cloud, cloud, transform);
+                // Get the pose from the transformed point cloud
+                position = extract_camera_position (cloud);
+                position = transform_eigvec(position, transform);
+
+                // Add to vectors
+                poses.push_back(position);
+                clouds.push_back(cloud);
+            }
+            else
+            {
+                // Add to vectors
+                position = cloud.sensor_origin_;
+                poses.push_back(position);
+                clouds.push_back(cloud);
             }
         }
+
         // Save the index order
         if (success && ix >= 0)
         {
@@ -195,10 +218,10 @@ bool load_test_directory(const string &dir, const bool &invert_transform, vector
         ix_order.push_back(it->first);
 
     // Return success if transformed files
-    if (poses.size() <= 0 || clouds.size() <= 0 || transforms.size() < 0 || ix_order.size() <= 0)
+    if (poses.size() <= 0 || clouds.size() <= 0 || ix_order.size() <= 0)
         return false;
     int num_clouds = clouds.size();
-    if (poses.size() != num_clouds || transforms.size() != num_clouds || ix_order.size() != num_clouds)
+    if (poses.size() != num_clouds || ix_order.size() != num_clouds)
         return false;
 
     ROS_INFO("io_utils::load_test_directory : loaded %lu clouds", clouds.size());
@@ -208,6 +231,14 @@ bool load_test_directory(const string &dir, const bool &invert_transform, vector
 bool load_test_directory(const string &dir, const bool &invert_transform, vector<Eigen::Vector4f> &poses, vector<PointCloud<PointT> > &clouds,
                          vector<Eigen::Matrix4f> &transforms)
 {
+    vector<int> ix_order;
+    return load_test_directory(dir, invert_transform, poses, clouds, transforms, ix_order);
+}
+
+bool load_test_directory(const string &dir, const bool &invert_transform,
+                         vector<Eigen::Vector4f> &poses, vector<PointCloud<PointT> > &clouds)
+{
+    vector<Eigen::Matrix4f> transforms;
     vector<int> ix_order;
     return load_test_directory(dir, invert_transform, poses, clouds, transforms, ix_order);
 }

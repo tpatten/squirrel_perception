@@ -65,6 +65,9 @@ bool load_test_directory(const std::string &dir, const bool &invert_transform,
                          std::vector<Eigen::Vector4f> &poses, std::vector<pcl::PointCloud<PointT> > &clouds, std::vector<Eigen::Matrix4f> &transforms);
 
 bool load_test_directory(const std::string &dir, const bool &invert_transform,
+                         std::vector<Eigen::Vector4f> &poses, std::vector<pcl::PointCloud<PointT> > &clouds);
+
+bool load_test_directory(const std::string &dir, const bool &invert_transform,
                          std::vector<Eigen::Vector4f> &poses, std::vector<sensor_msgs::PointCloud2 > &clouds,
                          std::vector<Eigen::Matrix4f> &transforms, std::vector<int> &ix_order);
 

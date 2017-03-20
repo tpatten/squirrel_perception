@@ -120,6 +120,14 @@ vector<int> rank(const vector<float> &vec)
     return rank(vecd);
 }
 
+bool isIdentity(const Eigen::Quaternionf &q)
+{
+    if (q.x() == 0 && q.y() == 0 && q.z() == 0 && (q.w() == 1.0 || q.w() == -1.0))
+      return true;
+    else
+      return false;
+}
+
 ///* === TEMPLATE DEFINITIONS === */
 //template double distance3D(const double &x1, const double &y1, const double &z1, const double &x2, const double &y2, const double &z2);
 //template float distance3D(const float &x1, const float &y1, const float &z1, const float &x2, const float &y2, const float &z2);
