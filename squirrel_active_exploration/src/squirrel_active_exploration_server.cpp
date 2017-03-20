@@ -201,7 +201,27 @@ private:
         }
 
         // Set the class estimates and replace the double back slashes in the file paths
+        cout << "CLASS ESTIMATES" << endl;
+        for (size_t i = 0; i < request.class_results.size(); ++i)
+        {
+            cout << "i: " << i << endl;
+            for (vector<std_msgs::String>::iterator it = request.class_results[i].pose.begin(); it != request.class_results[i].pose.end(); ++it)
+            {
+                cout << it->data << endl;
+            }
+        }
+
         _class_estimates = active_exploration_utils::fix_path_names(request.class_results);
+
+        cout << "CLASS ESTIMATES" << endl;
+        for (size_t i = 0; i < _class_estimates.size(); ++i)
+        {
+            cout << "i: " << i << endl;
+            for (vector<std_msgs::String>::iterator it = _class_estimates[i].pose.begin(); it != _class_estimates[i].pose.end(); ++it)
+            {
+                cout << it->data << endl;
+            }
+        }
 
         // Compute the poses
         if (!active_exploration_utils::estimate_pose(cloud, _segments, _poses))
@@ -220,6 +240,19 @@ private:
             response.nbv_ix = -1;
             free(tree_ptr);
             return false;
+        }
+
+        cout << "INSTANCE DIRECTORIES" << endl;
+        for (size_t i = 0; i < _instance_directories.size(); ++i)
+        {
+            cout << "i: " << i << endl;
+            for (size_t j = 0; j < _instance_directories[i].size(); ++j)
+            {
+                cout << _instance_directories[i][j]._dir << endl;
+                cout << _instance_directories[i][j]._class_type << endl;
+                cout << _instance_directories[i][j]._instance_name << endl;
+                cout << _instance_directories[i][j]._ix << endl;
+            }
         }
 
         // Extract the instance to map transforms

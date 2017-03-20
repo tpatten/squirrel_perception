@@ -229,6 +229,7 @@ int main(int argc, char **argv)
     vector<squirrel_object_perception_msgs::Classification> class_results;
     if (working_classifier)
     {
+        ROS_INFO("test_active_exploration_server_robot : calling classifier");
         classify_srv.request.cloud = cloud_msg;
         classify_srv.request.clusters_indices = clusters_indices;
         if (!classify_client.call(classify_srv))
@@ -237,6 +238,13 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
         class_results = classify_srv.response.class_results;
+        cout << "Returned " << class_results.size() << " results" << endl;
+        for (size_t i = 0; i < class_results.size(); ++i)
+        {
+            ROS_INFO("Segment %lu -", i);
+            for (size_t j = 0; j < class_results[i].class_type.size(); ++j)
+                ROS_INFO("  %-15s %.2f", class_results[i].class_type[j].data.c_str(), class_results[i].confidence[j]);
+        }
     }
     else
     {

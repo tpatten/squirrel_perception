@@ -699,6 +699,7 @@ namespace active_exploration_utils
         // For each segment call the entropy map service
         entropy_maps.resize(instance_directories.size());
         squirrel_object_perception_msgs::EntropyMap em_srv;
+        cout << "Getting entropy maps for " << instance_directories.size() << " instance directories" << endl;
         for (size_t i = 0; i < instance_directories.size(); ++i)
         {
             // For each class estimate
@@ -708,6 +709,8 @@ namespace active_exploration_utils
                 // Call the service to get the instance entropy map
                 em_srv.request.class_type.data = instance_directories[i][j]._class_type;
                 em_srv.request.instance_name.data = instance_directories[i][j]._instance_name;
+                cout << "Calling entropy map service with: " << em_srv.request.class_type.data
+                     << ", " << em_srv.request.instance_name.data << endl;
                 if (!em_client.call(em_srv))
                 {
                     ROS_ERROR("active_exploration_utils::retrieve_entropy_maps : could not call the entropy map service");
