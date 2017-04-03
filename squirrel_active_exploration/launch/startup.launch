@@ -31,7 +31,7 @@
         <remap from="image" to="$(arg camera_image)" />
   </node>
 
-  <!-- Classifier node from V4R ROS wrapper -->
+  <!-- Classifier -->
   <node pkg="object_classifier" type="object_classifier_node" name="v4r_object_classifier" output="screen" >
     <param name="models_dir" value="$(arg models_dir)" type="string"/>
     <param name="training_dir" value="$(arg training_dir)" type="string"/>
@@ -39,13 +39,12 @@
     <param name="chop_z" value="$(arg chop_z)" type="double"/>
   </node>
 
-  <!-- SQUIRREL node for wrapping the classifier -->
   <node name="squirrel_classification" pkg="squirrel_classification" type="squirrel_classification" required="true" output="screen" />
 
 	<!-- Entropy map -->
 	<include file="$(find squirrel_active_exploration)/launch/entropy_map.launch" />
 
 	<!-- To select the next best view -->
-	<include file="$(find squirrel_active_exploration)/launch/active_exploration_server.launch" />
+	<!--include file="$(find squirrel_active_exploration)/launch/active_exploration_server.launch" /-->
 
 </launch>

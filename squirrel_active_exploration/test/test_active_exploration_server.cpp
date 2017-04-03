@@ -215,7 +215,7 @@ int main(int argc, char **argv)
         kdtree.setInputCloud (cloud_ptr);
         vector<int> point_idx;
         vector<float> point_squared_distances;
-        float radius = 30; // cm??
+        float radius = 50; // cm??
         if (kdtree.radiusSearch (search_point, radius, point_idx, point_squared_distances) > 0)
         {
             ROS_WARN("test_active_exploration_server : segment has %lu points", point_idx.size());
@@ -243,6 +243,7 @@ int main(int argc, char **argv)
         {
             ROS_INFO("Segment %lu -", i);
             for (size_t j = 0; j < class_results[i].class_type.size(); ++j)
+                //ROS_INFO("  %-15s %s %.2f", class_results[i].class_type[j].data.c_str(), class_results[i].pose[j].data.c_str(), class_results[i].confidence[j]);
                 ROS_INFO("  %-15s %.2f", class_results[i].class_type[j].data.c_str(), class_results[i].confidence[j]);
         }
     }
@@ -258,16 +259,16 @@ int main(int argc, char **argv)
             c.class_type.push_back(str);
             str.data = "bottle/";
             c.class_type.push_back(str);
-            str.data = "spray_bottle/";
+            str.data = "mug/";
             c.class_type.push_back(str);
             c.confidence.push_back(0.2);
             c.confidence.push_back(0.3);
             c.confidence.push_back(0.5);
-            str.data = train_dir + "apple//3a92a256ad1e060ec048697b91f69d2/esf/pose_0.txt";
+            str.data = train_dir + "apple//3a92a256ad1e060ec048697b91f69d2/views/pose_0.txt";
             c.pose.push_back(str);
-            str.data = train_dir + "bottle//1cf98e5b6fff5471c8724d5673a063a6/esf/pose_0.txt";
+            str.data = train_dir + "bottle//1cf98e5b6fff5471c8724d5673a063a6/views/pose_0.txt";
             c.pose.push_back(str);
-            str.data = train_dir + "spray_bottle//9b9a4bb5550f00ea586350d6e78ecc7/esf/pose_0.txt";
+            str.data = train_dir + "mug//1c9f9e25c654cbca3c71bf3f4dd78475/views/pose_0.txt";
             c.pose.push_back(str);
             class_results.push_back(c);
         }

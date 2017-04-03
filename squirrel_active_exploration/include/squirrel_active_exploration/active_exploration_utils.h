@@ -47,7 +47,7 @@
 #include "pc_utils.h"
 
 #define _NULL_FILE "null"
-#define _INSTANCE_VIEW_FILENAME "view_"
+#define _INSTANCE_VIEW_FILENAME "views/cloud_"
 #define _EPS 0.05
 #define _CONFIDENCE_THRESHOLD 0.9
 

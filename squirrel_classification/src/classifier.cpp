@@ -66,9 +66,10 @@ class Classifier
             class_tmp.confidence.push_back(srv.response.class_results[i].confidence[j]);
             // from Tim Patten: this is present in squirrel_object_perception_msgs::Classify,
             // but not in classifier_srv_definitions::classify:
-            // std_msgs::String pose_tmp;
-            // pose_tmp.data = poses_[kk];
-            // class_tmp.pose.push_back(pose_tmp);
+            //std_msgs::String pose_tmp;
+            //pose_tmp.data = poses_[kk];
+            //class_tmp.pose.push_back(pose_tmp);
+						//class_tmp.pose.push_back(srv.response.class_results[i].pose[j]) // NEED THIS!
           }
           // NOTE: these are present in classifier_srv_definitions::classify, but not in 
           // squirrel_object_perception_msgs::Classify (because these are not actually

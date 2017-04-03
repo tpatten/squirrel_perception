@@ -13,6 +13,8 @@ catkin_package(
  geometry_msgs sensor_msgs squirrel_object_perception_msgs std_msgs visualization_msgs classifier_srv_definitions
 )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
 include_directories(include ${catkin_INCLUDE_DIRS} ${V4R_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 
 add_executable(squirrel_classification src/classifier.cpp)
@@ -20,6 +22,7 @@ add_executable(squirrel_classification src/classifier.cpp)
 target_link_libraries(squirrel_classification ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${V4R_LIBS})
 
 add_dependencies(squirrel_classification ${catkin_EXPORTED_TARGETS})
+
 install(TARGETS squirrel_classification RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(DIRECTORY include/${PROJECT_NAME}/ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 IF(${V4R_FOUND})
