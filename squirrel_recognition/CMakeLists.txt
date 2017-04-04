@@ -5,7 +5,7 @@ project(squirrel_recognition)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 
-find_package(catkin REQUIRED COMPONENTS roscpp rospy squirrel_object_perception_msgs genmsg cv_bridge sensor_msgs image_transport)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy squirrel_object_perception_msgs genmsg cv_bridge sensor_msgs image_transport tf tf2)
 
 find_package( PCL 1.7 REQUIRED )
 find_package( OpenCV 2.4 REQUIRED )
@@ -21,10 +21,10 @@ find_package( V4R REQUIRED )
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-   CATKIN_DEPENDS roscpp rospy squirrel_object_perception_msgs
+   CATKIN_DEPENDS roscpp rospy squirrel_object_perception_msgs tf tf2
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp") # Fails to compile because of GOMP
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -O3") # Fails to compile because of GOMP
 
 ###########
 ## Build ##
