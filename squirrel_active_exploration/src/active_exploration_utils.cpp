@@ -1733,23 +1733,23 @@ namespace active_exploration_utils
                 for (vector<EntMap>::size_type j = 0; j < emaps[sx].size(); ++j)
                 {
                     size_t max_iter;
-                    if (u_type == ENTROPY)
-                        max_iter = emaps[sx][j]._class_entropies.size();
                     if (u_type == PROBABILITY)
                         max_iter = emaps[sx][j]._recognition_probabilities.size();
-                    else
+                    else if (u_type == AREA)
                         max_iter = emaps[sx][j]._surface_areas.size();
+                    else
+                        max_iter = emaps[sx][j]._class_entropies.size();
                     // Iterate through each view
                     model_views_max_score[i][j] = -1;
                     for (vector<double>::size_type k = 0; k < max_iter; ++k)
                     {
                         double e;
-                        if (u_type == ENTROPY)
-                            e = emaps[sx][j]._class_entropies[k];
                         if (u_type == PROBABILITY)
                             e = emaps[sx][j]._recognition_probabilities[k];
-                        else
+                        else if (u_type == AREA)
                             e = emaps[sx][j]._surface_areas[k];
+                        else
+                            e = emaps[sx][j]._class_entropies[k];
                         // Replace the current value if the new value is larger
                         if (e > model_views_max_score[i][j])
                             model_views_max_score[i][j] = e;
@@ -1770,27 +1770,27 @@ namespace active_exploration_utils
             ROS_INFO("active_exploration_utils::next_best_view : computing scaled utilities");
             for (vector<int>::size_type i = 0; i < segs_for_planning.size(); ++i)
             {
-                cout << "i: " << i << endl;
+                //cout << "i: " << i << endl;
                 // Segment index
                 int sx = segs_for_planning[i];
-                cout << "sx: " << sx << endl;
+                //cout << "sx: " << sx << endl;
                 // View index from the instance directories
                 int view_ix = atoi(instance_directories[sx][0]._ix.c_str()); // most likely viewpoint
-                cout << "view_ix: " << view_ix << endl;
+                //cout << "view_ix: " << view_ix << endl;
                 // Resize the vectors
                 scaled_model_utilities[i].resize(emaps[sx].size());
                 model_views[i].resize(emaps[sx].size());
-                cout << "emaps.size() " << emaps.size() << endl;
-                cout << "emaps[sx].size() " << emaps[sx].size() << endl;
+                //cout << "emaps.size() " << emaps.size() << endl;
+                //cout << "emaps[sx].size() " << emaps[sx].size() << endl;
                 for (vector<EntMap>::size_type j = 0; j < emaps[sx].size(); ++j)
                 {
-                    // Resize the model utility vector
-                    if (u_type == ENTROPY)
-                        scaled_model_utilities[i][j].resize(emaps[sx][j]._class_entropies.size());
+                    // Resize the model utility vector    
                     if (u_type == PROBABILITY)
                         scaled_model_utilities[i][j].resize(emaps[sx][j]._recognition_probabilities.size());
-                    else
+                    else if (u_type == AREA)
                         scaled_model_utilities[i][j].resize(emaps[sx][j]._surface_areas.size());
+                    else
+                        scaled_model_utilities[i][j].resize(emaps[sx][j]._class_entropies.size());
                     // Resize the model views vector;
                     model_views[i][j].first.resize(emaps[sx][j]._camera_poses.size());
                     model_views[i][j].second.resize(emaps[sx][j]._camera_poses.size());
@@ -1803,13 +1803,13 @@ namespace active_exploration_utils
                         ROS_WARN("active_exploration_utils::next_best_view : invalid index for transform %u", vec_ix);
                     double max_scaled_val = 0;
                     for (vector<double>::size_type k = 0; k < emaps[sx][j]._surface_areas.size(); ++k)
-                    {
-                        if (u_type == ENTROPY)
-                            scaled_model_utilities[i][j][k] = 1 - (emaps[sx][j]._class_entropies[k]/model_views_max_score[i][j]) + _EPS;
+                    {   
                         if (u_type == PROBABILITY)
                             scaled_model_utilities[i][j][k] = emaps[sx][j]._recognition_probabilities[k]/model_views_max_score[i][j] + _EPS;
-                        else
+                        else if (u_type == AREA)
                             scaled_model_utilities[i][j][k] = emaps[sx][j]._surface_areas[k]/model_views_max_score[i][j] + _EPS;
+                        else
+                            scaled_model_utilities[i][j][k] = 1 - (emaps[sx][j]._class_entropies[k]/model_views_max_score[i][j]) + _EPS;
                         // Scale the utility value
                         if (scaled_model_utilities[i][j][k] > max_scaled_val)
                             max_scaled_val = scaled_model_utilities[i][j][k];
@@ -2981,18 +2981,18 @@ namespace active_exploration_utils
 
                 // Get the bext instance
                 int best_ix = -1;
-                if (u_type == ENTROPY)
-                    best_ix = min_element(emaps[i][j]._class_entropies.begin(),
-                                          emaps[i][j]._class_entropies.end()) -
-                                          emaps[i][j]._class_entropies.begin();
-                else if (u_type == PROBABILITY)
+                if (u_type == PROBABILITY)
                     best_ix = min_element(emaps[i][j]._recognition_probabilities.begin(),
                                           emaps[i][j]._recognition_probabilities.end()) -
                                           emaps[i][j]._recognition_probabilities.begin();
-                else
+                else if (u_type == AREA)
                     best_ix = max_element(emaps[i][j]._surface_areas.begin(),
                                           emaps[i][j]._surface_areas.end()) -
                                           emaps[i][j]._surface_areas.begin();
+                else
+                    best_ix = min_element(emaps[i][j]._class_entropies.begin(),
+                                          emaps[i][j]._class_entropies.end()) -
+                                          emaps[i][j]._class_entropies.begin();
 
                 // Add to the vectors
                 instance_clouds[i][j] = i_total;

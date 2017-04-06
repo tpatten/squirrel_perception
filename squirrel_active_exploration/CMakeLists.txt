@@ -30,6 +30,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 find_package(PCL 1.7 REQUIRED)
 find_package(OpenCV 2.4 REQUIRED)
 find_package(octomap REQUIRED)
+find_package(HDF5)
 
 catkin_package(
  INCLUDE_DIRS include #  LIBRARIES squirrel_segmentation
@@ -50,9 +51,9 @@ add_executable(squirrel_run_with_dataset src/squirrel_run_with_dataset.cpp $<TAR
 target_link_libraries(squirrel_run_with_dataset ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
 add_dependencies(squirrel_run_with_dataset V4R)
 
-add_executable(squirrel_run_robot_experiment src/squirrel_run_robot_experiment.cpp src/robot_controller.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
-target_link_libraries(squirrel_run_robot_experiment ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
-add_dependencies(squirrel_run_robot_experiment V4R)
+#add_executable(squirrel_run_robot_experiment src/squirrel_run_robot_experiment.cpp src/robot_controller.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
+#target_link_libraries(squirrel_run_robot_experiment ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
+#add_dependencies(squirrel_run_robot_experiment V4R)
 
 #add_executable(fake_action_server src/fake_action_server.cpp)
 #target_link_libraries(fake_action_server ${catkin_LIBRARIES})
@@ -106,11 +107,20 @@ add_dependencies(squirrel_map_coverage_server ${catkin_EXPORTED_TARGETS} ${squir
 add_executable(squirrel_active_exploration_server src/squirrel_active_exploration_server.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
 target_link_libraries(squirrel_active_exploration_server ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
 
+add_executable(esf_classifier src/classifier_ros.cpp src/esf_nn_classifier.cpp)
+target_link_libraries(esf_classifier ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${FLANN_LIBRARIES} ${HDF5_hdf5_LIBRARY})
+
 add_executable(test_active_exploration_server test/test_active_exploration_server.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
 target_link_libraries(test_active_exploration_server ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
 
-add_executable(test_classifier test/test_classifier.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
-target_link_libraries(test_classifier ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
+#add_executable(test_classifier test/test_classifier.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
+#target_link_libraries(test_classifier ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
+
+#add_executable(test_segmenter test/test_segmenter.cpp)
+#target_link_libraries(test_segmenter ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
+
+#add_executable(test_recognizer test/test_recognizer.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
+#target_link_libraries(test_recognizer ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
 
 #add_executable(test_active_exploration_server_robot test/test_active_exploration_server_robot.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
 #target_link_libraries(test_active_exploration_server_robot ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})

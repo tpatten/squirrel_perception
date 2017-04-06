@@ -16,7 +16,7 @@
 #include "squirrel_object_perception_msgs/SegmentVisualizationInit.h"
 #include "squirrel_object_perception_msgs/SegmentVisualizationOnce.h"
 
-#include "v4r/EPUtils/EPUtils.hpp"
+//#include "v4r/EPUtils/EPUtils.hpp"
 
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>

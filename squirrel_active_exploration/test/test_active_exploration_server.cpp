@@ -1,7 +1,12 @@
 #include <ros/ros.h>
 #include <octomap_ros/conversions.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <cv.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <cv_bridge/cv_bridge.h>
 #include <squirrel_object_perception_msgs/Segment.h>
+#include <squirrel_object_perception_msgs/SegmentVisualizationInit.h>
+#include <squirrel_object_perception_msgs/SegmentVisualizationOnce.h>
 #include <squirrel_object_perception_msgs/Classify.h>
 #include <squirrel_object_perception_msgs/ActiveExplorationNBV.h>
 #include "squirrel_active_exploration/io_utils.h"
@@ -32,6 +37,7 @@ int main(int argc, char **argv)
     // Get the parameters
     string data_dir = "";
     string train_dir = "";
+    string saliency_filename = "";
     double variance = _VARIANCE;
     double camera_height = _CAMERA_HEIGHT;
     double robot_radius = _ROBOT_RADIUS;
@@ -49,6 +55,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
     n.getParam ("train_dir", train_dir);
+    n.getParam ("saliency_map", saliency_filename);
     n.getParam ("variance", variance);
     n.getParam ("camera_height", camera_height);
     n.getParam ("robot_radius", robot_radius);
@@ -140,12 +147,35 @@ int main(int argc, char **argv)
     squirrel_object_perception_msgs::ActiveExplorationNBV nbv_srv;
     ros::ServiceClient seg_client = n.serviceClient<squirrel_object_perception_msgs::Segment>("/squirrel_segmentation");;
     squirrel_object_perception_msgs::Segment seg_srv;
-    ros::ServiceClient classify_client = n.serviceClient<squirrel_object_perception_msgs::Classify>("/squirrel_classify");
+    ros::ServiceClient classify_client = n.serviceClient<squirrel_object_perception_msgs::Classify>("/squirrel_esf_classify");
     squirrel_object_perception_msgs::Classify classify_srv;
+    ros::ServiceClient seg_vis_init_client = n.serviceClient<squirrel_object_perception_msgs::SegmentVisualizationInit>("/squirrel_segmentation_visualization_init");
+    squirrel_object_perception_msgs::SegmentVisualizationInit seg_vis_init_srv;
+    ros::ServiceClient seg_vis_client = n.serviceClient<squirrel_object_perception_msgs::SegmentVisualizationOnce>("/squirrel_segmentation_visualization_once");
+    squirrel_object_perception_msgs::SegmentVisualizationOnce seg_vis_srv;
 
     // Convert the point cloud to a ros message type
     sensor_msgs::PointCloud2 cloud_msg;
     pcl::toROSMsg(cloud, cloud_msg);
+
+    // Initialize the the segmentation viewer
+    cv::Mat saliency = cv::imread(saliency_filename,-1);
+    cv_bridge::CvImagePtr cv_ptr (new cv_bridge::CvImage);
+    ros::Time time = ros::Time::now();
+    // Convert OpenCV image to ROS message
+    cv_ptr->header.stamp = time;
+    cv_ptr->header.frame_id = "saliency_map";
+    cv_ptr->encoding = "mono8";
+    cv_ptr->image = saliency;
+    sensor_msgs::Image saliency_map;
+    cv_ptr->toImageMsg(saliency_map);
+    seg_vis_init_srv.request.cloud = cloud_msg;
+    seg_vis_init_srv.request.saliency_map = saliency_map;
+    if (!seg_vis_init_client.call(seg_vis_init_srv))
+    {
+        ROS_ERROR("test_active_exploration_server : failed to call service /squirrel_segmentation_visualization_init");
+        return EXIT_FAILURE;
+    }
 
     // Create an octree with the point cloud input
     OcTree tree (tree_resolution);
@@ -156,17 +186,7 @@ int main(int argc, char **argv)
     pointCloud2ToOctomap(cloud_msg, o_cloud);
     tree.insertPointCloud(o_cloud, pos);
 
-    // Octomap - Only works with binary conversion!
-//    vector<int8_t> map_data;
-//    if (!octomap_msgs::fullMapToMsgData(tree, map_data))
-//    {
-//        ROS_ERROR("test_active_exploration_server::main : could not convert the octomap");
-//        return EXIT_FAILURE;
-//    }
-//    nbv_srv.request.map.id = "OcTree";  // always!
-//    nbv_srv.request.map.binary = false; // used full map conversion
-//    nbv_srv.request.map.resolution = tree_resolution;
-//    nbv_srv.request.map.data = map_data;
+    // Octomap
     octomap_msgs::Octomap oc_msg;
     if (!octomap_msgs::binaryMapToMsg(tree, oc_msg))
     {
@@ -198,6 +218,19 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
         clusters_indices = seg_srv.response.clusters_indices;
+
+        for (size_t i = 0; i < seg_srv.response.clusters_indices.size(); ++i)
+        {
+            cout << "Segment " << i << " - " << seg_srv.response.clusters_indices[i].data.size() << endl;
+            // Visualise
+            seg_vis_srv.request.clusters_indices.resize(1);
+            seg_vis_srv.request.clusters_indices[0] = seg_srv.response.clusters_indices[i];
+            if (!seg_vis_client.call(seg_vis_srv))
+            {
+                ROS_ERROR("test_active_exploration_server : failed to call service /squirrel_segmentation_visualization_once");
+                return EXIT_FAILURE;
+            }
+        }
     }
 
     // If segmentation failed, try a random patch of points

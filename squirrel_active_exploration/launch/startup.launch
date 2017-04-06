@@ -3,48 +3,31 @@
 
   <arg name="hostname" default="localhost" />
 
-  <arg name="model_filename" default="$(find squirrel_segmentation)/data/ST-TrainAll.txt.model" />
-  <arg name="scaling_filename" default="$(find squirrel_segmentation)/data/ST-TrainAll.txt.scalingparams" />
-  <arg name="models_dir" default="$(find squirrel_active_exploration)/data/training_set/Cat10_ModelDatabase_reduced" />
-  <arg name="training_dir" default="$(find squirrel_active_exploration)/data/training_set/Cat10_ModelDatabase_reduced" />
-	<arg name="nn" default="10" />
-  <arg name="chop_z" default="2.5" />
-  <arg name="camera_image" default="/squirrel_segmentation_visualization_segmentation" />
-
 	<!-- Segmentation -->
-  <node name="squirrel_segmentation"
-        pkg="squirrel_segmentation"
-        type="squirrel_segmentation"
-        required="true" output="screen">
-        <param name="model_filename" type="string" value="$(arg model_filename)"/>
-        <param name="scaling_filename" type="string" value="$(arg scaling_filename)"/>
+  <node name="squirrel_segmentation" pkg="squirrel_segmentation" type="squirrel_segmentation" required="true" output="screen">
   </node>
 
-  <!--node name="squirrel_segmentation_visualization"
-        pkg="squirrel_segmentation"
-        type="squirrel_segmentation_visualization">
-  </node-->
-
-  <node name="image_view"
-        pkg="image_view"
-        type="image_view">
-        <remap from="image" to="$(arg camera_image)" />
+  <node name="squirrel_segmentation_visualization" pkg="squirrel_segmentation" type="squirrel_segmentation_visualization" output="screen">
   </node>
 
-  <!-- Classifier -->
-  <node pkg="object_classifier" type="object_classifier_node" name="v4r_object_classifier" output="screen" >
+  <node name="image_view" pkg="image_view" type="image_view">
+			<remap from="image" to="/squirrel_segmentation_visualization_segmentation" />
+  </node>
+
+  <!-- Classification -->
+  <!--node pkg="object_classifier" type="object_classifier_node" name="v4r_object_classifier" output="screen" >
     <param name="models_dir" value="$(arg models_dir)" type="string"/>
     <param name="training_dir" value="$(arg training_dir)" type="string"/>
     <param name="nn" value="$(arg nn)" type="int"/>
     <param name="chop_z" value="$(arg chop_z)" type="double"/>
-  </node>
+  </node-->
 
-  <node name="squirrel_classification" pkg="squirrel_classification" type="squirrel_classification" required="true" output="screen" />
+  <include file="$(find squirrel_active_exploration)/launch/esf_classifier.launch" />
 
 	<!-- Entropy map -->
-	<include file="$(find squirrel_active_exploration)/launch/entropy_map.launch" />
+	<!--include file="$(find squirrel_active_exploration)/launch/entropy_map.launch" /-->
 
-	<!-- To select the next best view -->
-	<!--include file="$(find squirrel_active_exploration)/launch/active_exploration_server.launch" /-->
+	<!-- Planning -->
+	<include file="$(find squirrel_active_exploration)/launch/active_exploration_server.launch" />
 
 </launch>

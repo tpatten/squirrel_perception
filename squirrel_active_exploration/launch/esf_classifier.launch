@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="hostname" default="localhost" />
+  <arg name="models_dir" default="/home/tpatten/Data/models/Cat10_ModelDatabase" />
+	<arg name="nn" default="50" />
+
+  <node name="squirrel_esf_classifier" pkg="squirrel_active_exploration" type="esf_classifier" required="true" output="screen">
+			<param name="models_dir" type="string" value="$(arg models_dir)"/>
+			<param name="nn" type="int" value="$(arg nn)"/>
+  </node>
+
+</launch>

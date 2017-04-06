@@ -7,8 +7,9 @@
        Can be an entire directory of point clouds, one of which will be selected at random, or a single point cloud file.
 	   Training directory only needed if classifier is not working.
    -->
-  <arg name="data_dir" default="$(find squirrel_active_exploration)/data/T_01_willow_dataset/" />
-  <arg name="train_dir" default="$(find squirrel_active_exploration)/data/training_set/Cat10_ModelDatabase_reduced/" />
+  <arg name="data_dir" default="/home/tpatten/Data/test/willow_test_set/T_01_willow_dataset/" />
+  <arg name="train_dir" default="/home/tpatten/Data/models/Cat10_ModelDatabase" />
+	<arg name="saliency_map" default="$(find squirrel_segmentation)/data/test45.png" />
   <arg name="variance" default="0.5" />
   <arg name="camera_height" default="0.7" />
   <arg name="robot_radius" default="0.22" />
@@ -19,12 +20,10 @@
   <arg name="occlusions" default="true" />
   <arg name="working_classifier" default="true" />  <!-- is "true" if classifier is working?? -->
 
-  <node name="test_active_exploration_server"
-        pkg="squirrel_active_exploration"
-        type="test_active_exploration_server"
-        output="screen">
+  <node name="test_active_exploration_server" pkg="squirrel_active_exploration" type="test_active_exploration_server" output="screen">
 		<param name="data_dir" type="string" value="$(arg data_dir)" />
 		<param name="train_dir" type="string" value="$(arg train_dir)" />
+		<param name="saliency_map" type="string" value="$(arg saliency_map)" />
     <param name="variance" type="double" value="$(arg variance)" />
 		<param name="camera_height" type="double" value="$(arg camera_height)" />
 		<param name="robot_radius" type="double" value="$(arg robot_radius)" />

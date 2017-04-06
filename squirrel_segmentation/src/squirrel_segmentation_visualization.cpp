@@ -15,9 +15,24 @@ SegmenterVisualization::segmentVisualizationInit (squirrel_object_perception_msg
   pcl::fromROSMsg (req.cloud, *scene);
   ROS_INFO ("Number of points in the scene: %ld", scene->points.size());
 
-  // create image ot publish
+  // create image to publish
   pcl::PointCloud<pcl::PointXYZ>::Ptr scene_xyz (new pcl::PointCloud<pcl::PointXYZ>);
-  EPUtils::pointCloudXYZRGB_2_cloudXYZimageRGB(scene,scene_xyz,RGB,scene->width,scene->height);
+  //EPUtils::pointCloudXYZRGB_2_cloudXYZimageRGB(scene,scene_xyz,RGB,scene->width,scene->height);
+	
+	// Convert points to a cv::Mat
+  cv::Mat img(scene->height, scene->width, CV_8UC3);
+  for (int i = 0; i < scene->height; ++i)
+  {
+    	for (int j = 0; j < scene->width; ++j)
+    	{
+      		pcl::PointXYZRGB p = scene->at(j,i);
+      		Eigen::Vector3i rgb = p.getRGBVector3i();
+      		img.at<cv::Vec3b>(i,j)[0] = rgb[2];
+      		img.at<cv::Vec3b>(i,j)[1] = rgb[1];
+      		img.at<cv::Vec3b>(i,j)[2] = rgb[0];
+    	}
+  }
+	RGB = img.clone();
 
   //publish saliency map
   //get saliency map
@@ -134,7 +149,7 @@ SegmenterVisualization::initialize (int argc, char ** argv)
   SegmentVisualizationOnce_ = n_->advertiseService ("/squirrel_segmentation_visualization_once", &SegmenterVisualization::segmentVisualizationOnce, this);
   SaliencyPub_ = n_->advertise<sensor_msgs::Image>("/squirrel_segmentation_visualization_saliencymap", 1000, true);
   SegmentationPub_ = n_->advertise<sensor_msgs::Image>("/squirrel_segmentation_visualization_segmentation", 1000, true);
-  ROS_INFO ("Ready to get service calls...");
+  ROS_INFO ("Squirrel_Segmentation_Visualization_Server :  Ready to get service calls...");
   ros::spin ();
 }
 

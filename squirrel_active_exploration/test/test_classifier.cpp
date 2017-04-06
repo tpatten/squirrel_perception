@@ -19,16 +19,21 @@ int main(int argc, char **argv)
     ros::NodeHandle n("~");
 
     // Set up service client for classification
-    ros::ServiceClient class_client = n.serviceClient<squirrel_object_perception_msgs::Classify>("/squirrel_classify");
+    ros::ServiceClient class_client = n.serviceClient<squirrel_object_perception_msgs::Classify>("/squirrel_esf_classify");
     squirrel_object_perception_msgs::Classify class_srv;
 
     // Load the input point cloud
-    string cloud_name = "/home/tpatten/Data/4DoorSedan.pcd";
+    string cloud_name;
+    if (!n.getParam("cloud", cloud_name))
+    {
+        ROS_ERROR("You need to specify a point cloud file!");
+        return EXIT_FAILURE;
+    }
     PointCloud<PointT> cloud;
     if (io::loadPCDFile<PointT> (cloud_name.c_str(), cloud) == -1)
     {
         ROS_ERROR("Could not load point cloud %s", cloud_name.c_str());
-        return 0;
+        return EXIT_FAILURE;
     }
 
     // Pass the data to the message
@@ -55,7 +60,7 @@ int main(int argc, char **argv)
     if (!class_client.call(class_srv))
     {
         ROS_ERROR("Could not call the classification service");
-        return 1;
+        return EXIT_FAILURE;
     }
     ROS_INFO("Successfully classified the segments");
     vector<squirrel_object_perception_msgs::Classification> class_estimates = class_srv.response.class_results;
@@ -70,5 +75,5 @@ int main(int argc, char **argv)
     }
 
     // Finished
-    return 0;
+    return EXIT_SUCCESS;
 }

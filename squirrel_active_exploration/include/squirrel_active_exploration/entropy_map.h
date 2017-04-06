@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <boost/thread.hpp>
+#include "boost/filesystem.hpp"
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -33,6 +34,7 @@
 #include <squirrel_object_perception_msgs/EntropyMapViz.h>
 
 #define _GENERATED_DATA_DIR "views"
+#define _EMAP_DATA_DIR "emap"
 #define _VIEW_PREFIX "cloud_"
 #define _TRANSFORM_PREFIX "pose_"
 #define _CENTROID_PREFIX "centroid_"

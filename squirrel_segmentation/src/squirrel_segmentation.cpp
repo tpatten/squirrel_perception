@@ -8,31 +8,31 @@
 #include <squirrel_segmentation/squirrel_segmentation.hpp>
   
 bool
-SegmenterComplete::segment (squirrel_object_perception_msgs::Segment::Request & req, squirrel_object_perception_msgs::Segment::Response & response)
+SegmenterComplete::segment (squirrel_object_perception_msgs::Segment::Request &req, squirrel_object_perception_msgs::Segment::Response &response)
 {
   //get point cloud
-  pcl::PointCloud<PointT>::Ptr scene (new pcl::PointCloud<PointT>);
-  pcl::fromROSMsg (req.cloud, *scene);
-  ROS_INFO ("Number of points in the scene: %ld", scene->points.size());
-    
-  segmenter_->setInputCloud(scene);
-  
-  ROS_INFO ("Going to segment the scene.");
-  
+	pcl::PointCloud<PointT>::Ptr inCloud(new pcl::PointCloud<PointT>());
+  pcl::fromROSMsg (req.cloud, *inCloud);
+	ROS_INFO ("Number of points in the scene: %ld", inCloud->points.size());
+  std::vector<pcl::PointIndices> cluster_indices;
+  std::vector<pcl::PointCloud<PointT>::Ptr> clusters;
+
+  segmenter_->setInputCloud(inCloud);
   segmenter_->segment();
-  
-  std::vector<std::vector<int> > clusters;// = segmenter_->getSegmentIndices();
+  segmenter_->getSegmentIndices(cluster_indices);
     
-  ROS_INFO ("Number of segmented objects: %ld",clusters.size());
+  ROS_INFO ("Number of segmented objects: %ld", cluster_indices.size());
   
-  for(size_t i=0; i < clusters.size(); i++)
+	response.clusters_indices.clear();
+  for(size_t i = 0; i < cluster_indices.size(); i++)
   {
-    std_msgs::Int32MultiArray indx;
-    for(size_t k=0; k < clusters[i].size(); k++)
-    {
-      indx.data.push_back(clusters[i][k]);
-    }
-    response.clusters_indices.push_back(indx);
+		  std_msgs::Int32MultiArray indx;
+			std::cout << "segment " << i << " has " << cluster_indices[i].indices.size() << " points" << std::endl;
+		  for(size_t k = 0; k < cluster_indices[i].indices.size(); k++)
+		    	indx.data.push_back(cluster_indices[i].indices[k]);
+
+			// Add to output
+		  response.clusters_indices.push_back(indx);
   }
     
   return true;
@@ -54,28 +54,12 @@ SegmenterComplete::initialize (int argc, char ** argv)
 {
   ros::init (argc, argv, "squirrel_segmentation_server");
   n_ = new ros::NodeHandle ("~");
-  n_->getParam ( "model_filename", model_filename_);
-  n_->getParam ( "scaling_filename", scaling_filename_);
-  
-  if (model_filename_.compare ("") == 0)
-  {
-    ROS_ERROR ("Set -model_filename option in the command line, ABORTING");
-    return;
-  }
-    
-  if (scaling_filename_.compare ("") == 0)
-  {
-    ROS_ERROR ("Set -scaling_filename option in the command line, ABORTING");
-    return;
-  }
   
 	v4r::DominantPlaneSegmenterParameter params;  
   segmenter_ = new v4r::DominantPlaneSegmenter<PointT>(params);
-  //segmenter_->setModelFilename(model_filename_);
-  //segmenter_->setScaling(scaling_filename_);
     
   Segment_ = n_->advertiseService ("/squirrel_segmentation", &SegmenterComplete::segment, this);
-  ROS_INFO ("Ready to get service calls...");
+  ROS_INFO ("Squirrel_Segmentation_Server : Ready to get service calls...");
   ros::spin ();
 }
 

@@ -57,8 +57,9 @@ bool InstanceEntropyMap::load_data()
     ROS_INFO("InstanceEntropyMap::load_data : loading entropy map %s ...", _instance_name.c_str());
     DIR *dp;
     struct dirent *dirp;
-    // Training data contained in directory called "views"
-    // Except centroid data that is contained in directory "descriptor_name"
+    // Point cloud data contained in directory called "views"
+    // Centroid data contained in directory "descriptor_name"
+    // Entropy map data contained in directory "emap"
     string ob_train_dir = add_backslash(_training_directory) +
                           add_backslash(_class_name) +
                           add_backslash(_instance_name) +
@@ -73,10 +74,6 @@ bool InstanceEntropyMap::load_data()
     map<int,PointCloud<PointT>::Ptr> cloud_map;
     map<int,Eigen::Matrix4f*> transform_map;
     map<int,double*> surface_area_map;
-    map<int,double*> class_entropy_map;
-    map<int,double*> self_probability_map;
-    bool loaded_octree = false;
-
     while ((dirp = readdir(dp)) != NULL)
     {
         string f = string(dirp->d_name);
@@ -123,46 +120,13 @@ bool InstanceEntropyMap::load_data()
                             }
                         }
                         // NOTE these are in the incorrect direction, need to take the inverse
-                        Eigen::Matrix4f tri = tr.inverse();
-                        Eigen::Matrix4f *tr_ptr (new Eigen::Matrix4f(tri));
+                        //Eigen::Matrix4f tri = tr.inverse();
+                        Eigen::Matrix4f *tr_ptr (new Eigen::Matrix4f(tr));
                         transform_map[ix] = tr_ptr;
                         //cout << "*tr_ptr: " << *tr_ptr << endl;
                     }
                     myfile.close();
                 }
-//                if (strncmp(f.c_str(),_CENTROID_PREFIX, sizeof(_CENTROID_PREFIX)-1) == 0)
-//                {
-//                    // Open the file
-//                    ifstream myfile (filename.c_str());
-//                    if (myfile.is_open())
-//                    {
-//                        Eigen::Vector4f cr;
-//                        int i = 0;
-//                        string word;
-//                        while (myfile >> word)
-//                        {
-//                            cr[i] = atof(word.c_str());
-//                            ++i;
-//                            if (i == 3)
-//                                break;
-//                        }
-//                        cr[3] = 0;
-//                        Eigen::Vector4f *cr_ptr (new Eigen::Vector4f(cr));
-//                        // Re read the integer because it is different for the centroids
-//                        // Index is between the two underscores
-//                        size_t underscore1 = f.find_first_of('_');
-//                        size_t underscore2 = f.find_last_of('_');
-//                        if (underscore1 != string::npos && underscore2 != string::npos && (underscore2 - underscore1) > 0)
-//                        {
-//                            int cr_str_len = underscore2 - underscore1;
-//                            string cr_str_ix = f.substr(underscore1+1,cr_str_len-1);
-//                            int cr_ix = atoi(cr_str_ix.c_str());
-//                            centroid_map[cr_ix] = cr_ptr;
-//                        }
-//                        cout << "centroid " << *cr_ptr << endl;
-//                    }
-//                    myfile.close();
-//                }
                 if (strncmp(f.c_str(),_SURFACE_AREA_PREFIX, sizeof(_SURFACE_AREA_PREFIX)-1) == 0)
                 {
                     // Open the file
@@ -179,55 +143,6 @@ bool InstanceEntropyMap::load_data()
                     }
                     myfile.close();
                 }
-                if (strncmp(f.c_str(),_CLASS_ENTROPY_PREFIX, sizeof(_CLASS_ENTROPY_PREFIX)-1) == 0)
-                {
-                    // Open the file
-                    ifstream myfile (filename.c_str());
-                    if (myfile.is_open())
-                    {
-                        string word;
-                        // Only read one number on the file
-                        myfile >> word;
-                        double ce = atof(word.c_str());
-                        double *ce_ptr (new double(ce));
-                        class_entropy_map[ix] = ce_ptr;
-                        //cout << "class entropy " << *ce_ptr << endl;
-                    }
-                    myfile.close();
-                }
-                if (strncmp(f.c_str(),_SELF_PROB_PREFIX, sizeof(_SELF_PROB_PREFIX)-1) == 0)
-                {
-                    // Open the file
-                    ifstream myfile (filename.c_str());
-                    if (myfile.is_open())
-                    {
-                        string word;
-                        // Only read one number on the file
-                        myfile >> word;
-                        double pr = atof(word.c_str());
-                        double *pr_ptr (new double(pr));
-                        self_probability_map[ix] = pr_ptr;
-                        //cout << "self probability " << *pr_ptr << endl;
-                    }
-                    myfile.close();
-                }
-            }
-            // Check if it is the tree file
-            else
-            {
-                if (strcmp(f.c_str(), _OCTREE_FILENAME) == 0)
-                {
-                    // Set the string name and the flag
-                    _octree_file = ob_train_dir + _OCTREE_FILENAME;
-                    loaded_octree = true;
-                }
-                else if (strcmp(f.c_str(), _BINARY_OCTREE_FILENAME) == 0)
-                {
-                    // Set the string name and the flag
-                    _octree_file = ob_train_dir + _BINARY_OCTREE_FILENAME;
-                    loaded_octree = true;
-                }
-                //cout << "octree filename " << _octree_file << endl;
             }
         }
     }
@@ -281,20 +196,107 @@ bool InstanceEntropyMap::load_data()
                         }
                         cr[3] = 0;
                         Eigen::Vector4f *cr_ptr (new Eigen::Vector4f(cr));
-                        // Re read the integer because it is different for the centroids
-                        // Index is between the two underscores
-                        size_t underscore1 = f.find_first_of('_');
-                        size_t underscore2 = f.find_last_of('_');
-                        if (underscore1 != string::npos && underscore2 != string::npos && (underscore2 - underscore1) > 0)
-                        {
-                            int cr_str_len = underscore2 - underscore1;
-                            string cr_str_ix = f.substr(underscore1+1,cr_str_len-1);
-                            int cr_ix = atoi(cr_str_ix.c_str());
-                            centroid_map[cr_ix] = cr_ptr;
-                        }
+                        centroid_map[ix] = cr_ptr;
                         //cout << "centroid " << *cr_ptr << endl;
+//                        // Re read the integer because it is different for the centroids
+//                        // Index is between the two underscores
+//                        size_t underscore1 = f.find_first_of('_');
+//                        size_t underscore2 = f.find_last_of('_');
+//                        if (underscore1 != string::npos && underscore2 != string::npos && (underscore2 - underscore1) > 0)
+//                        {
+//                            int cr_str_len = underscore2 - underscore1;
+//                            string cr_str_ix = f.substr(underscore1+1,cr_str_len-1);
+//                            int cr_ix = atoi(cr_str_ix.c_str());
+//                            centroid_map[cr_ix] = cr_ptr;
+//                        }
+//                        //cout << "centroid " << *cr_ptr << endl;
                     }
                     myfile.close();
+                }
+            }
+        }
+    }
+    closedir(dp);
+
+    // Get the entropy and self probability values
+    map<int,double*> class_entropy_map;
+    map<int,double*> self_probability_map;
+    bool loaded_octree = false;
+    string em_train_dir = add_backslash(_training_directory) +
+                          add_backslash(_class_name) +
+                          add_backslash(_instance_name) +
+                          add_backslash(_EMAP_DATA_DIR);
+    ROS_INFO("InstanceEntropyMap::load_data : loading emap files in %s", em_train_dir.c_str());
+    if((dp  = opendir(em_train_dir.c_str())) == NULL)
+    {
+        ROS_WARN("InstanceEntropyMap::load_data : could not open %s", em_train_dir.c_str());
+    }
+    else
+    {
+        while ((dirp = readdir(dp)) != NULL)
+        {
+            string f = string(dirp->d_name);
+            if (strcmp(f.c_str(),".") != 0 && strcmp(f.c_str(),"..") != 0)
+            {
+                // Get the number
+                size_t underscore = f.find_last_of('_');
+                size_t dot = f.find_last_of('.');
+                if (underscore != string::npos && dot != string::npos && (dot - underscore) > 0)
+                {
+                    int str_len = dot - underscore;
+                    string str_ix = f.substr(underscore+1,str_len-1);
+                    int ix = atoi(str_ix.c_str());
+                    string filename = em_train_dir + f;
+
+                    if (strncmp(f.c_str(),_CLASS_ENTROPY_PREFIX, sizeof(_CLASS_ENTROPY_PREFIX)-1) == 0)
+                    {
+                        // Open the file
+                        ifstream myfile (filename.c_str());
+                        if (myfile.is_open())
+                        {
+                            string word;
+                            // Only read one number on the file
+                            myfile >> word;
+                            double ce = atof(word.c_str());
+                            double *ce_ptr (new double(ce));
+                            class_entropy_map[ix] = ce_ptr;
+                            //cout << "class entropy " << *ce_ptr << endl;
+                        }
+                        myfile.close();
+                    }
+                    if (strncmp(f.c_str(),_SELF_PROB_PREFIX, sizeof(_SELF_PROB_PREFIX)-1) == 0)
+                    {
+                        // Open the file
+                        ifstream myfile (filename.c_str());
+                        if (myfile.is_open())
+                        {
+                            string word;
+                            // Only read one number on the file
+                            myfile >> word;
+                            double pr = atof(word.c_str());
+                            double *pr_ptr (new double(pr));
+                            self_probability_map[ix] = pr_ptr;
+                            //cout << "self probability " << *pr_ptr << endl;
+                        }
+                        myfile.close();
+                    }
+                }
+                // Check if it is the tree file
+                else
+                {
+                    if (strcmp(f.c_str(), _OCTREE_FILENAME) == 0)
+                    {
+                        // Set the string name and the flag
+                        _octree_file = em_train_dir + _OCTREE_FILENAME;
+                        loaded_octree = true;
+                    }
+                    else if (strcmp(f.c_str(), _BINARY_OCTREE_FILENAME) == 0)
+                    {
+                        // Set the string name and the flag
+                        _octree_file = em_train_dir + _BINARY_OCTREE_FILENAME;
+                        loaded_octree = true;
+                    }
+                    //cout << "octree filename " << _octree_file << endl;
                 }
             }
         }
@@ -393,9 +395,25 @@ bool InstanceEntropyMap::load_data()
         }
         // Save the octomap to file
         ROS_INFO("InstanceEntropyMap::load_data : saving octree ...");
-        _octree_file = ob_train_dir + _BINARY_OCTREE_FILENAME;
-        tree.writeBinary(_octree_file);
-        ROS_INFO("InstanceEntropyMap::load_data : saved!");
+        bool save_tree = true;
+        if (!boost::filesystem::exists(em_train_dir))
+        {
+            ROS_WARN("InstanceEntropyMap::load_data : creating directory %s", em_train_dir.c_str());
+            boost::filesystem::path p(em_train_dir);
+            boost::system::error_code err;
+            boost::filesystem::create_directories(p, err);
+            if (err)
+            {
+                ROS_WARN("InstanceEntropyMap::load_data : error creating directory %s", em_train_dir.c_str());
+                save_tree = false;
+            }
+        }
+        if (save_tree)
+        {
+            _octree_file = em_train_dir + _BINARY_OCTREE_FILENAME;
+            tree.writeBinary(_octree_file);
+            ROS_INFO("InstanceEntropyMap::load_data : saved!");
+        }
     }
 
     return true;
@@ -430,7 +448,7 @@ bool InstanceEntropyMap::compute_classification_data(ros::ServiceClient &class_c
 {
     ROS_INFO("InstanceEntropyMap::compute_classification_data : computing the classification data for %s/%s",
              _class_name.c_str(), _instance_name.c_str());
-    // Compute the class entropy for the point clouds if it has not already been computed
+    // Compute the class entropy for the point clouds if they have not already been computed
     if (!is_valid_classification_data())
     {
 //        std::vector<pcl::PointCloud<PointT>::Ptr> _point_clouds;
@@ -450,7 +468,7 @@ bool InstanceEntropyMap::compute_classification_data(ros::ServiceClient &class_c
             _self_probabilities.clear();
             for (vector<PointCloud<PointT>::Ptr>::size_type i = 0; i < _point_clouds.size(); ++i)
             {
-                _class_entropies.push_back (NULL);
+                _class_entropies.push_back(NULL);
                 _self_probabilities.push_back(NULL);
             }
         }
@@ -460,7 +478,21 @@ bool InstanceEntropyMap::compute_classification_data(ros::ServiceClient &class_c
         string dir = add_backslash(_training_directory) +
                      add_backslash(_class_name) +
                      add_backslash(_instance_name) +
-                     add_backslash(_GENERATED_DATA_DIR);
+                     add_backslash(_EMAP_DATA_DIR);
+
+        if (!boost::filesystem::exists(dir))
+        {
+            ROS_WARN("InstanceEntropyMap::compute_classification_data : creating directory %s", dir.c_str());
+            boost::filesystem::path p(dir);
+            boost::system::error_code err;
+            boost::filesystem::create_directories(p, err);
+            if (err)
+            {
+                ROS_ERROR("InstanceEntropyMap::compute_classification_data : error creating directory %s", dir.c_str());
+                return false;
+            }
+        }
+
         string f;
         // For each view
         for (vector<PointCloud<PointT>::Ptr>::size_type i = 0; i < _point_clouds.size(); ++i)
@@ -908,15 +940,15 @@ void ClassEntropyMap::clear()
 bool ClassEntropyMap::load_data()
 {
     // Look up all the files in the training directory
-    ROS_INFO("ClassEntropyMap::initialize : loading all instance entropy maps for class %s ...", _class_name.c_str());
+    ROS_INFO("ClassEntropyMap::load_data : loading all instance entropy maps for class %s ...", _class_name.c_str());
     DIR *dp;
     struct dirent *dirp;
     string ob_train_dir = add_backslash(_training_directory) +
                           add_backslash(_class_name);
-    ROS_INFO("ClassEntropyMap::initialize : loading training files in %s", ob_train_dir.c_str());
+    ROS_INFO("ClassEntropyMap::load_data : loading training files in %s", ob_train_dir.c_str());
     if((dp  = opendir(ob_train_dir.c_str())) == NULL)
     {
-        ROS_ERROR("ClassEntropyMap::initialize : could not open %s", ob_train_dir.c_str());
+        ROS_ERROR("ClassEntropyMap::load_data : could not open %s", ob_train_dir.c_str());
         return false;
     }
 
@@ -936,7 +968,7 @@ bool ClassEntropyMap::load_data()
             else
             {
                 // Could not initialize the object
-                ROS_WARN("ClassEntropyMap::initialize : could not initialize instance in directory %s", f.c_str());
+                ROS_WARN("ClassEntropyMap::load_data : could not initialize instance in directory %s", f.c_str());
             }
         }
     }
@@ -1054,7 +1086,7 @@ bool EntropyMap::initialize(ros::NodeHandle *node)
     _n = node;
 
     // Subscribe to service
-    _class_client = _n->serviceClient<squirrel_object_perception_msgs::Classify>("/squirrel_classify");
+    _class_client = _n->serviceClient<squirrel_object_perception_msgs::Classify>("/squirrel_esf_classify");
 
     // Read the input if it exists
     _n->getParam ( "training_directory", _training_directory);
@@ -1112,7 +1144,7 @@ bool EntropyMap::load_data()
     while ((dirp = readdir(dp)) != NULL)
     {
         string f = string(dirp->d_name);
-        if (strcmp(f.c_str(),".") != 0 && strcmp(f.c_str(),"..") != 0)
+        if (strcmp(f.c_str(),".") != 0 && strcmp(f.c_str(),"..") != 0 && f.find(".") == string::npos)
         {
             //cout << "class " << f << endl;
             // Create a new class entropy map

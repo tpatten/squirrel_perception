@@ -60,6 +60,7 @@ bool SegmentationPopoutNode::segment(squirrel_object_perception_msgs::SegmentIni
 
   pcl::PointCloud<PointT>::Ptr inCloud(new pcl::PointCloud<PointT>());
   pcl::fromROSMsg (req.cloud, *inCloud);
+	ROS_INFO ("Number of points in the scene: %ld", inCloud->points.size());
   std::vector<pcl::PointIndices> cluster_indices;
   std::vector<pcl::PointCloud<PointT>::Ptr> clusters;
 
@@ -78,7 +79,7 @@ bool SegmentationPopoutNode::segment(squirrel_object_perception_msgs::SegmentIni
     cloud_cluster->height = 1;
     cloud_cluster->is_dense = true;
     clusters.push_back(cloud_cluster);
-    std::cout << ros::this_node::getName() << "PointCloud representing the Cluster: " << cloud_cluster->points.size () << " data points." << std::endl;
+    std::cout << ros::this_node::getName() << " PointCloud representing the Cluster: " << cloud_cluster->points.size () << " data points." << std::endl;
   }
 
   ROS_INFO("%s: found %d clusters", ros::this_node::getName().c_str(), (int)clusters.size());
