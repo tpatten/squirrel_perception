@@ -1,6 +1,6 @@
 <a id="top"/> 
-squirrel_active_exploration
-========
+
+# squirrel_active_exploration
 
 The squirrel_active_exploration package evaluates the utility of potential viewpoints in an environment. It can be used to plan the next-best-view by comparing the utility of candidate viewpoints and selecting the one with the highest utility. The package operates with RGB-D data in the form of point clouds (.pcd). This can be from a dataset or from a hardware device. For use with a dataset, the clouds must be aligned to a common map frame with a set of transformation files (see [Willow Garage dataset](https://repo.acin.tuwien.ac.at/tmp/permanent/dataset_index.php) for an example). <br />
 During the online operation, a belief about each object is maintained consisting of its pose and class. The planner considers future viewpoints and determines the next view that will best improve the beliefs. This is done by maximising a utility function. <br />
@@ -39,9 +39,14 @@ The ROS packages dependencies can be installed with the command:
 rosdep install --from-path squirrel_active_exploration -i -y
 ```
 
+NEW! requires Hierarchical Data Format 5 (HDF5) to use the new esf classifier within this package
+```
+sudo apt-get install libhdf5-dev
+```
+
 #### Services
 *squirrel_active_exploration* requires additional nodes to run. <br />
-Classification from [squirrel_classification](https://github.com/squirrel-project/squirrel_perception/blob/indigo_dev/squirrel_classification/launch/startup.launch). <br />
+Classification from [squirrel_classification](https://github.com/squirrel-project/squirrel_perception/blob/indigo_dev/squirrel_classification/launch/startup.launch) (NEW use classification within this package [esf_classifier](https://github.com/tpatten/squirrel_perception/blob/mod_new_v4r/squirrel_active_exploration/launch/esf_classifier.launch)) <br />
 Segmentation from [squirrel_segmentation](https://github.com/squirrel-project/squirrel_perception/tree/indigo_dev/squirrel_segmentation/launch) (use the incremental version). <br />
 Entropy map from [entropy_map.launch](https://github.com/squirrel-project/squirrel_perception/blob/indigo_dev/squirrel_active_exploration/launch/entropy_map.launch). <br />
 Robot controller (only for real experiments with a robot) from [robot_controller.launch](https://github.com/squirrel-project/squirrel_perception/blob/indigo_dev/squirrel_active_exploration/launch/robot_controller.launch). <br />
