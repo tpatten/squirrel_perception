@@ -55,8 +55,10 @@ SegmenterComplete::initialize (int argc, char ** argv)
   ros::init (argc, argv, "squirrel_segmentation_server");
   n_ = new ros::NodeHandle ("~");
   
-	v4r::DominantPlaneSegmenterParameter params;  
-  segmenter_ = new v4r::DominantPlaneSegmenter<PointT>(params);
+	//v4r::DominantPlaneSegmenterParameter params;
+  //segmenter_ = new v4r::DominantPlaneSegmenter<PointT>(params);
+	DominantPlaneSegmenterParameter params;
+	segmenter_ = new DominantPlaneSegmenter<PointT>(params);
     
   Segment_ = n_->advertiseService ("/squirrel_segmentation", &SegmenterComplete::segment, this);
   ROS_INFO ("Squirrel_Segmentation_Server : Ready to get service calls...");

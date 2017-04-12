@@ -15,19 +15,12 @@
   </node>
 
   <!-- Classification -->
-  <!--node pkg="object_classifier" type="object_classifier_node" name="v4r_object_classifier" output="screen" >
-    <param name="models_dir" value="$(arg models_dir)" type="string"/>
-    <param name="training_dir" value="$(arg training_dir)" type="string"/>
-    <param name="nn" value="$(arg nn)" type="int"/>
-    <param name="chop_z" value="$(arg chop_z)" type="double"/>
-  </node-->
-
-  <include file="$(find squirrel_active_exploration)/launch/esf_classifier.launch" />
+  <!--include file="$(find squirrel_active_exploration)/launch/esf_classifier.launch" /-->
 
 	<!-- Entropy map -->
 	<!--include file="$(find squirrel_active_exploration)/launch/entropy_map.launch" /-->
 
 	<!-- Planning -->
-	<include file="$(find squirrel_active_exploration)/launch/active_exploration_server.launch" />
+	<!--include file="$(find squirrel_active_exploration)/launch/active_exploration_server.launch" /-->
 
 </launch>

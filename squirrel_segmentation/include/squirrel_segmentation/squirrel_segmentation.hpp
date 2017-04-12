@@ -13,7 +13,8 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
-#include <v4r/segmentation/dominant_plane_segmenter.h>
+//#include <v4r/segmentation/dominant_plane_segmenter.h>
+#include "squirrel_segmentation/dominant_plane_segmenter.h"
 #include <squirrel_object_perception_msgs/Segment.h>
 
 #ifndef SQUIRREL_SEGMENTATION_HPP_
@@ -25,7 +26,8 @@ private:
   typedef pcl::PointXYZRGB PointT;
   ros::ServiceServer Segment_;
   ros::NodeHandle *n_;
-  v4r::DominantPlaneSegmenter<PointT>* segmenter_;
+  //v4r::DominantPlaneSegmenter<PointT>* segmenter_;
+	DominantPlaneSegmenter<PointT>* segmenter_;
 
   bool
   segment (squirrel_object_perception_msgs::Segment::Request &req, squirrel_object_perception_msgs::Segment::Response &response);

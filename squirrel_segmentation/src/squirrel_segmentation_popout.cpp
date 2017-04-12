@@ -46,9 +46,11 @@ void SegmentationPopoutNode::initialize(int argc, char ** argv)
     SegmentOnce_ = n_->advertiseService ("/squirrel_segmentation_incremental_once", &SegmentationPopoutNode::returnNextResult, this);
     ROS_INFO("Ready to get service calls...");
 
-    v4r::DominantPlaneSegmenterParameter params;
+    //v4r::DominantPlaneSegmenterParameter params;
     //params.seg_type_ = 1;
-    segmenter_ = new v4r::DominantPlaneSegmenter<PointT>(params);
+    //segmenter_ = new v4r::DominantPlaneSegmenter<PointT>(params);
+		DominantPlaneSegmenterParameter params;
+		segmenter_ = new DominantPlaneSegmenter<PointT>(params);
 }
 
 bool SegmentationPopoutNode::segment(squirrel_object_perception_msgs::SegmentInit::Request & req, squirrel_object_perception_msgs::SegmentInit::Response & response)
