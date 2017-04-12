@@ -119,8 +119,8 @@ target_link_libraries(test_active_exploration_server ${catkin_LIBRARIES} ${OpenC
 add_executable(test_segmenter test/test_segmenter.cpp)
 target_link_libraries(test_segmenter ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
 
-#add_executable(test_recognizer test/test_recognizer.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
-#target_link_libraries(test_recognizer ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
+add_executable(test_recognizer test/test_recognizer.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
+target_link_libraries(test_recognizer ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
 
 #add_executable(test_active_exploration_server_robot test/test_active_exploration_server_robot.cpp $<TARGET_OBJECTS:squirrel_active_exploration_common>)
 #target_link_libraries(test_active_exploration_server_robot ${catkin_LIBRARIES} ${OpenCV_LIBS} ${PCL_LIBRARIES} ${OCTOMAP_LIBRARIES})
