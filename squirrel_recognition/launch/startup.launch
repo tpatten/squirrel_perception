@@ -1,5 +1,5 @@
 <launch>
-  <arg name="models_dir" value="/home/tpatten/Data/models/willow_models" />
+  <arg name="models_dir" value="/home/tpatten/Data/models/TUW_models/TUW_models" />
 
   <arg name="hv_config_xml" default="$(find squirrel_recognition)/cfg/hv_config.xml" doc="Filename of Hypotheses Verification XML configuration file"  />
   <arg name="sift_config_xml" default="$(find squirrel_recognition)/cfg/sift_config.xml" doc="Filename of SIFT XML configuration file"/>

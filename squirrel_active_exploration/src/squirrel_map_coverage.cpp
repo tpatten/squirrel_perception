@@ -93,13 +93,20 @@ int main(int argc, char **argv)
     string dir = "";
     if (is_directory)
         dir = filename;
+    ROS_INFO("squirrel_map_coverage::main : filename %s", dir.c_str());
 
     // Get the locations
     vector<point3d> locations = get_coverage_locations(tree, dir, robot, step, max_iters, (unsigned int)tree_depth);
 
     // If visualization is on
     if (visualize)
+    {
+        octree_visualize(tree, robot, (unsigned int)tree_depth);
+        octree_visualize_grid(tree, robot, step, (unsigned int)tree_depth);
+        octree_visualize_location(tree, robot, (unsigned int)tree_depth);
+        octree_visualize_minimal_overlap(tree, dir, robot, step, max_iters, (unsigned int)tree_depth);
         visualize_coverage(tree, robot, step, locations, (unsigned int)tree_depth);
+    }
 
     ROS_INFO("*** FINISH SQUIRREL_MAP_COVERAGE ***");
     ros::shutdown();

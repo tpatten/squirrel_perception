@@ -42,7 +42,7 @@ int main(int argc, char** argv)
     squirrel_object_perception_msgs::Recognize srv;
 
     // Load the input point cloud
-    string cloud_name = "/home/tpatten/Data/models/willow_models/object_01/views/cloud_00000000.pcd";
+    string cloud_name = "/home/tpatten/Data/models/TUW_models/TUW_models/asus_box/views/cloud_00000000.pcd";
     PointCloud<PointT> cloud;
     if (io::loadPCDFile<PointT> (cloud_name.c_str(), cloud) == -1)
     {
@@ -53,7 +53,7 @@ int main(int argc, char** argv)
     cloud.height = 480;
     cloud.width = 640;
     // Load the indices
-    string indices_file = "/home/tpatten/Data/models/willow_models/object_01/views/object_indices_00000000.txt";
+    string indices_file = "/home/tpatten/Data/models/TUW_models/TUW_models/asus_box/views/object_indices_00000000.txt";
     vector<int> seg = read_indices(indices_file);
     if (seg.size() <= 0)
     {
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     // Crop the point cloud
     PointCloud<PointT> segmented_cloud;
     copyPointCloud(cloud, seg, segmented_cloud);
-    pcl::io::savePCDFileASCII ("/home/tpatten/Data/segmented.pcd", segmented_cloud);
+    //pcl::io::savePCDFileASCII ("/home/tpatten/Data/segmented.pcd", segmented_cloud);
     PointT min_p, max_p;
     getMinMax3D(segmented_cloud, min_p, max_p);
     cout << "Size from Segmenter: " << "X(" << min_p.x << ";" << max_p.x << ")"
@@ -89,7 +89,7 @@ int main(int argc, char** argv)
     pass.setFilterLimits(min_p.z-0.05, max_p.z+0.05);
     pass.setInputCloud(cloud_ptr);
     pass.filter(*cloud_ptr);
-    pcl::io::savePCDFileASCII ("/home/tpatten/Data/filtered.pcd", *cloud_ptr);
+    //pcl::io::savePCDFileASCII ("/home/tpatten/Data/filtered.pcd", *cloud_ptr);
 
     // Recognition
     toROSMsg(*cloud_ptr, srv.request.cloud);
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
                 */
                 cout << "-- Object " << i << "/" << srv.response.ids.size() << endl;
                 cout << "Category: " << srv.response.ids.at(i).data << endl;
-                //cout << "Confidence: " << srv.response.confidence.at(i) << endl;
+                cout << "Confidence: " << srv.response.confidence.at(i) << endl;
                 //object.pose = transform(srv.response.centroid.at(i).x, srv.response.centroid.at(i).y, srv.response.centroid.at(i).z,
                 //                        srv.request.cloud.header.frame_id, "/map").pose;
             }

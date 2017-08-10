@@ -3,7 +3,7 @@
 
   <arg name="hostname" default="localhost" />
 
-  <arg name="data_filename" default="/home/tpat8946/Data/TUW/maps/tuw_apartment" />
+  <arg name="data_filename" default="/home/tpatten/Data/maps/fr_078_tidyup.bt" />
   <arg name="tree_depth" default="14" />
   <arg name="robot_height" default="0.7" />
   <arg name="robot_outer_range" default="2.0" />

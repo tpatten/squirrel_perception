@@ -27,7 +27,12 @@ class PointCloud2PCD {
 protected:
 
     typedef pcl::PointXYZRGB PointT;
+    sensor_msgs::PointCloud2 scene;
+    ros::Subscriber sub;
     ros::NodeHandle* nh;
+    string dir;
+    string f;
+    int id;
 
     static const bool savePose = true;
 
@@ -35,15 +40,10 @@ public:
     void initialize(int argc, char ** argv) {
         ros::init(argc, argv, "cloud2pcd");
         nh = new ros::NodeHandle ( "~" );
-        ROS_INFO("Initialized");
-    }
-
-    void pointcloud2pcd() {
-
-        string dir = "";
-        int id = 100;
+        dir = "";
         nh->getParam("directory", dir);
-        nh->getParam("id", id);
+        ROS_INFO("pointcloud2pcd : directory %s", dir.c_str());
+        id = 0;
 
         // Add a backslash
         if (dir.size() == 0)
@@ -58,17 +58,25 @@ public:
                 dir = dir + "/";
         }
 
-        // Point cloud
-        sensor_msgs::PointCloud2ConstPtr scene = ros::topic::waitForMessage<sensor_msgs::PointCloud2>("/camera/depth_registered/points",
-                                                                                                      *nh, ros::Duration(50));
+        sub = nh->subscribe("/camera/depth_registered/points", 1000, &PointCloud2PCD::callback, this);
+        ROS_INFO("pointcloud2pcd : initialized!");
+    }
+
+    void pointcloud2pcd() {
+
+//        // Point cloud
+//        sensor_msgs::PointCloud2ConstPtr scene = ros::topic::waitForMessage<sensor_msgs::PointCloud2>("/camera/depth_registered/points",
+//                                                                                                      *nh, ros::Duration(50));
+        f = dir + _CLOUD_PREFIX + boost::lexical_cast<string>(id) + ".pcd";
+        ROS_INFO("pointcloud2pcd : saving to %s", f.c_str());
         PCLPointCloud2 pcl_pc2;
-        pcl_conversions::toPCL(*scene,pcl_pc2);
+        pcl_conversions::toPCL(scene,pcl_pc2);
         PointCloud<PointT> cloud;
         fromPCLPointCloud2(pcl_pc2, cloud);
         ROS_INFO("pointcloud2pcd : read %lu points", cloud.size());
-        string f = dir + _CLOUD_PREFIX + boost::lexical_cast<string>(id) + ".pcd";
         io::savePCDFileBinary (f, cloud);
         ROS_INFO("pointcloud2pcd : point cloud saved");
+        ++id;
         /*
         // Transform
         tf::StampedTransform transform;
@@ -117,6 +125,11 @@ public:
         */
     }
 
+    void callback(const sensor_msgs::PointCloud2::ConstPtr& msg)
+    {
+        scene = *msg;
+    }
+
     ~PointCloud2PCD() {
         if (nh) {
             delete(nh);
@@ -129,5 +142,23 @@ int main(int argc, char **argv)
 {
     PointCloud2PCD pc2pcd;
     pc2pcd.initialize(argc, argv);
-    pc2pcd.pointcloud2pcd();
+
+    // Spin
+    ros::Rate rate ( 30 );
+    while ( ros::ok() )
+    {
+        ROS_INFO("\nReady...");
+        ros::spinOnce();
+        rate.sleep();
+        // Wait for keyboard input
+        cin.ignore();
+        ROS_INFO("Key pressed");
+        // get Cloud
+        ros::spinOnce();
+        rate.sleep();
+        // Save cloud
+        pc2pcd.pointcloud2pcd();
+    }
+
+    return EXIT_SUCCESS;
 }

@@ -102,6 +102,8 @@ RecognizerROS<PointT>::respondSrvCall(squirrel_object_perception_msgs::Recognize
         //      confidence = 1.f - vr.getFSVUsedPoints() / static_cast<float>(model_aligned->points.size());
         //      response.confidence.push_back(confidence);
 
+        response.confidence.push_back(oh->confidence_);  // Using new confidence from new V4R!!
+
         //centroid and BBox
         Eigen::Vector4f centroid;
         pcl::compute3DCentroid(*model_aligned, centroid);
